@@ -1,0 +1,36 @@
+{
+  "name": "cooptme-mobile",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@auth0/auth0-react": "^2.2.4",
+    "@react-native-async-storage/async-storage": "^2.1.0",
+    "@react-navigation/native": "^7.0.13",
+    "@react-navigation/stack": "^7.0.18",
+    "axios": "^1.7.9",
+    "expo": "~52.0.17",
+    "expo-status-bar": "~2.0.0",
+    "nativewind": "^4.1.23",
+    "postcss": "^8.4.49",
+    "react": "18.3.1",
+    "react-native": "0.76.3",
+    "react-native-permissions": "^5.2.1",
+    "react-native-qrcode-scanner": "^1.5.5",
+    "react-native-safe-area-context": "^4.14.0",
+    "react-native-screens": "^4.3.0",
+    "socket.io-client": "^4.8.1",
+    "tailwindcss": "^3.4.16"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@types/react": "~18.3.12",
+    "typescript": "^5.3.3"
+  },
+  "private": true
+}
