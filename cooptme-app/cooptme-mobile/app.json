@@ -12,6 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -23,6 +26,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-video"
+    ],
+    "fonts": {
+      "Quicksand-Regular": "./assets/fonts/Quicksand-Regular.ttf",
+      "Quicksand-Bold": "./assets/fonts/Quicksand-Bold.ttf"
     }
   }
 }
