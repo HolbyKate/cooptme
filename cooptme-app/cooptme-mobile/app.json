@@ -4,11 +4,11 @@
     "slug": "cooptme-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo_blue.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo_blue.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -18,32 +18,43 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Cette application nécessite l'accès à la caméra pour scanner les codes QR."
-      }
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access camera.",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone"
+      },
+      "bundleIdentifier": "com.anonymous.cooptmemobile"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": ["CAMERA"]
+      "permissions": [
+        "CAMERA",
+        "android.permission.CAMERA",
+        "VIBRATE"
+      ],
+      "package": "com.anonymous.cooptmemobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Quicksand-Regular.ttf",
+            "./assets/fonts/Quicksand-Bold.ttf"
+          ]
+        }
+      ],
       "expo-video",
       [
-        "expo-barcode-scanner",
+        "expo-camera",
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access camera."
         }
       ]
-    ],
-    "fonts": {
-      "Quicksand-Regular": "./assets/fonts/Quicksand-Regular.ttf",
-      "Quicksand-Bold": "./assets/fonts/Quicksand-Bold.ttf"
-    }
+    ]
   }
 }

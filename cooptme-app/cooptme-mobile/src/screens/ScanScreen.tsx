@@ -4,17 +4,23 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Linking,
   Alert,
   SafeAreaView,
 } from 'react-native';
-import { Camera } from 'expo-camera';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { Camera, CameraType } from 'expo-camera';
 import { X } from 'lucide-react-native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../App';
 
-export default function ScanScreen() {
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+interface Props {
+  navigation: NavigationProp;
+}
+
+export default function ScanScreen({ navigation }: Props) {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [scanned, setScanned] = useState(false);
+  const [camera, setCamera] = useState<Camera | null>(null);
 
   useEffect(() => {
     requestPermissions();
@@ -30,51 +36,15 @@ export default function ScanScreen() {
     }
   };
 
-  const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
-    setScanned(true);
-    
-    try {
-      // Vérifier si c'est un lien LinkedIn
-      if (data.includes('linkedin.com')) {
-        Alert.alert(
-          'Profil LinkedIn détecté',
-          'Voulez-vous ouvrir ce profil ?',
-          [
-            {
-              text: 'Annuler',
-              style: 'cancel',
-              onPress: () => setScanned(false),
-            },
-            {
-              text: 'Ouvrir',
-              onPress: async () => {
-                try {
-                  await Linking.openURL(data);
-                } catch (error) {
-                  Alert.alert('Erreur', "Impossible d'ouvrir le lien");
-                }
-                setScanned(false);
-              },
-            },
-          ]
-        );
-      } else {
-        // Gérer d'autres types de QR codes ici
-        Alert.alert(
-          'QR Code scanné',
-          `Contenu: ${data}`,
-          [
-            {
-              text: 'OK',
-              onPress: () => setScanned(false),
-            },
-          ]
-        );
+  const takePicture = async () => {
+    if (camera) {
+      try {
+        const photo = await camera.takePictureAsync();
+        // Ici vous pouvez ajouter votre logique pour traiter la photo du QR code
+        Alert.alert('Photo prise', 'Photo capturée avec succès');
+      } catch (error) {
+        Alert.alert('Erreur', 'Impossible de prendre la photo');
       }
-    } catch (error) {
-      console.error('Erreur lors du traitement du QR code:', error);
-      Alert.alert('Erreur', 'Une erreur est survenue lors du scan');
-      setScanned(false);
     }
   };
 
@@ -102,26 +72,32 @@ export default function ScanScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <BarCodeScanner
-        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+      <Camera
+        ref={ref => setCamera(ref)}
         style={styles.camera}
+        type={CameraType.back}
       >
         <View style={styles.overlay}>
           <View style={styles.scanArea} />
         </View>
-      </BarCodeScanner>
-      
-      {!scanned && (
-        <View style={styles.guideContainer}>
-          <Text style={styles.guideText}>
-            Placez un QR code dans le cadre pour le scanner
-          </Text>
-        </View>
-      )}
+      </Camera>
+
+      <View style={styles.guideContainer}>
+        <Text style={styles.guideText}>
+          Placez le QR code dans le cadre
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.captureButton}
+        onPress={takePicture}
+      >
+        <View style={styles.captureButtonInner} />
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.closeButton}
-        onPress={() => setScanned(false)}
+        onPress={() => navigation.goBack()}
       >
         <X color="#FFFFFF" size={24} />
       </TouchableOpacity>
@@ -190,4 +166,21 @@ const styles = StyleSheet.create({
     right: 20,
     padding: 10,
   },
+  captureButton: {
+    position: 'absolute',
+    bottom: 30,
+    alignSelf: 'center',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  captureButtonInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
+  }
 });
