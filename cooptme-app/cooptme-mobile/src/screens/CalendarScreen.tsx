@@ -10,8 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Menu, ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { EventService } from '../services/events';
-import type { EventDTO } from '../services/events/types';
+import { EventService, EventDTO } from "../services/events";
 
 const WEEKDAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 const MONTHS = [
@@ -79,7 +78,7 @@ export default function CalendarScreen() {
     // Add cells for each day of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-      const isSelected = 
+      const isSelected =
         date.getDate() === selectedDate.getDate() &&
         date.getMonth() === selectedDate.getMonth() &&
         date.getFullYear() === selectedDate.getFullYear();
@@ -127,7 +126,7 @@ export default function CalendarScreen() {
           <Menu color="#4247BD" size={24} />
         </TouchableOpacity>
         <Image
-          source={require('../../assets/logo.png')}
+          source={require('../../assets/logo_blue.png')}
           style={styles.logo}
           resizeMode="contain"
         />

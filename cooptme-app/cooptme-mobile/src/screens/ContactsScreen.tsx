@@ -116,7 +116,7 @@ export default function ContactsScreen() {
           <Menu color="#4247BD" size={24} />
         </TouchableOpacity>
         <Image
-          source={require('../../assets/logo.png')}
+          source={require('../../assets/logo_blue.png')}
           style={styles.logo}
           resizeMode="contain"
         />
