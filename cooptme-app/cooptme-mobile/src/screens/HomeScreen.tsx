@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-import React, { useRef, useState } from "react";
-=======
+import React, { useRef, useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
 import {
   StyleSheet,
   Text,
@@ -11,19 +8,11 @@ import {
   Dimensions,
   Animated,
 } from "react-native";
-<<<<<<< HEAD
-=======
-import { useRef, useEffect, useState } from "react";
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
 import { Video, ResizeMode } from "expo-av";
 import QRCode from "react-native-qrcode-svg";
 import * as Linking from "expo-linking";
 import { LinearGradient } from "expo-linear-gradient";
-<<<<<<< HEAD
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-=======
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
 
 type HomeScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -33,12 +22,6 @@ const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
-<<<<<<< HEAD
-  const video = useRef(null);
-  const contactUrl = "https://www.linkedin.com/in/cathyaugustin/";
-  const [isQRVisible, setIsQRVisible] = useState(false);
-
-=======
   const video = useRef<Video>(null);
   const contactUrl = "https://www.linkedin.com/in/cathyaugustin/";
   const qrSlideAnim = useRef(new Animated.Value(200)).current;
@@ -91,23 +74,16 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     Linking.openURL(contactUrl);
   };
 
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
   return (
     <View style={styles.container}>
       <LinearGradient
         colors={["#4247BD", "#4247BD", "#4247BD"]}
-<<<<<<< HEAD
-        style={styles.background}
-      />
-
-=======
         locations={[0, 0.5, 1]}
         style={styles.background}
       />
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
       <TouchableOpacity
         style={styles.loginButton}
-        onPress={() => navigation.navigate("Login")}
+        onPress={() => navigation.navigate("MainApp")}
       >
         <Text style={styles.loginButtonText}>Login / Sign In</Text>
       </TouchableOpacity>
@@ -117,29 +93,12 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Video
             ref={video}
             style={styles.logo}
-<<<<<<< HEAD
-            source={require("../../assets/logo_bleu_video.mp4")}
-            useNativeControls={false}
-            resizeMode={ResizeMode.CONTAIN}
-            isLooping
-            shouldPlay
-            isMuted
-          />
-        </View>
-
-        <Text style={styles.text}>Scan it, you'll be coopted</Text>
-
-        <TouchableOpacity
-          style={styles.qrButton}
-          onPress={() => setIsQRVisible(!isQRVisible)}
-        >
-=======
             resizeMode={ResizeMode.CONTAIN}
             shouldPlay={true}
             isLooping={true}
             isMuted={true}
             useNativeControls={false}
-            source={require("../../assets/logo_bleu_video.mp4") }
+            source={require("../../assets/logo_bleu_video.mp4")}
           />
         </View>
 
@@ -148,29 +107,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         </Animated.Text>
 
         <TouchableOpacity style={styles.qrButton} onPress={toggleQRCode}>
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
           <Text style={styles.qrButtonText}>
             {isQRVisible ? "Hide QR Code" : "Show QR Code"}
           </Text>
         </TouchableOpacity>
 
-<<<<<<< HEAD
-        {isQRVisible && (
-          <View style={styles.qrContainer}>
-            <TouchableOpacity onPress={() => Linking.openURL(contactUrl)}>
-              <View style={styles.qrBackground}>
-                <QRCode
-                  value={contactUrl}
-                  size={120}
-                  color="black"
-                  backgroundColor="white"
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-=======
         <Animated.View
           style={[
             styles.qrContainer,
@@ -193,7 +134,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         </Animated.View>
       </View>
       <StatusBar style="auto" />
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
     </View>
   );
 }
@@ -208,23 +148,12 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-<<<<<<< HEAD
-=======
     zIndex: 1,
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
   },
   content: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-<<<<<<< HEAD
-  },
-  logoContainer: {
-    width: windowWidth * 0.9,
-    height: windowHeight * 0.5,
-    justifyContent: "center",
-    alignItems: "center",
-=======
     zIndex: 2,
   },
   logoContainer: {
@@ -233,13 +162,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginTop: -60,
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
   },
   logo: {
     width: "100%",
     height: "100%",
-<<<<<<< HEAD
-=======
     resizeMode: "contain",
   },
   text: {
@@ -248,7 +174,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     position: "absolute",
     top: "65%",
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
   },
   loginButton: {
     position: "absolute",
@@ -259,22 +184,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     zIndex: 3,
-<<<<<<< HEAD
-    elevation: 5,
-  },
-  loginButtonText: {
-    color: "#4247BD",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  text: {
-    fontSize: 18,
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    marginVertical: 20,
-  },
-  qrButton: {
-=======
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -292,22 +201,10 @@ const styles = StyleSheet.create({
   qrButton: {
     position: "absolute",
     bottom: 40,
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
     backgroundColor: "#FF8F66",
     paddingVertical: 12,
     paddingHorizontal: 18,
     borderRadius: 20,
-<<<<<<< HEAD
-    marginTop: 20,
-  },
-  qrButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  qrContainer: {
-    marginTop: 20,
-=======
   },
   qrButtonText: {
     fontFamily: "Quicksand-Bold",
@@ -318,14 +215,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 100,
     zIndex: 3,
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
   },
   qrBackground: {
     backgroundColor: "#FFFFFF",
     padding: 15,
     borderRadius: 15,
-<<<<<<< HEAD
-=======
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -333,7 +227,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
->>>>>>> 2d25150 (Add .gitignore and configuration files for project setup)
     elevation: 5,
   },
 });
