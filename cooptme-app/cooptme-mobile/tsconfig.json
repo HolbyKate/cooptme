@@ -3,12 +3,15 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-native",
+    "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
       "*": ["src/*"],
       "@screens/*": ["src/screens/*"],
       "@services/*": ["src/services/*"]
-    }
+    },
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "**/*.ts",

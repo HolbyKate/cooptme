@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from './src/screens/HomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import DashboardScreen from './src/screens/DashboardScreen';
 import EventsScreen from './src/screens/EventsScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
 import ChatScreen from './src/screens/ChatScreen';
@@ -14,6 +15,7 @@ import ScanScreen from './src/screens/ScanScreen';
 export type RootStackParamList = {
   Home: undefined;
   Login: undefined;
+  Dashboard: undefined;
   Events: undefined;
   Calendar: undefined;
   Chat: undefined;
@@ -41,6 +43,7 @@ export default function App() {
       >
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Dashboard" component={DashboardScreen} />
         <Stack.Screen name="Events" component={EventsScreen} />
         <Stack.Screen name="Calendar" component={CalendarScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} />

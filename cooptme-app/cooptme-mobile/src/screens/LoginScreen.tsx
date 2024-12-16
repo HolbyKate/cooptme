@@ -71,6 +71,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   };
 
   const handleSubmit = async () => {
+    navigation.navigate('Dashboard');
     if (validate()) {
       setIsLoading(true);
       try {
@@ -84,7 +85,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             password,
           });
         }
-        navigation.navigate('Home');
+        navigation.navigate('Dashboard');
       } catch (error: any) {
         setErrorMessage(error.message || 'Une erreur est survenue');
       } finally {

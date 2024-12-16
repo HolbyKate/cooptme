@@ -83,7 +83,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       />
       <TouchableOpacity
         style={styles.loginButton}
-        onPress={() => navigation.navigate("MainApp")}
+        onPress={() => navigation.navigate("Login")}
       >
         <Text style={styles.loginButtonText}>Login / Sign In</Text>
       </TouchableOpacity>
