@@ -7,10 +7,9 @@ import {
   Dimensions,
   Animated,
 } from "react-native";
-import { Video } from "expo-av";
+import { Video, ResizeMode } from 'expo-av';
 import QRCode from "react-native-qrcode-svg";
 import * as Linking from "expo-linking";
-import LinearGradient from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -81,12 +80,6 @@ const HomeScreen = ({ navigation }: HomeScreenProps) => {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={["#4247BD", "#4247BD", "#4247BD"]}
-        locations={[0, 0.5, 1]}
-        style={styles.background}
-      />
-
       <TouchableOpacity
         style={styles.loginButton}
         onPress={() => navigation.navigate("Login")}
@@ -99,8 +92,8 @@ const HomeScreen = ({ navigation }: HomeScreenProps) => {
           <Video
             ref={video}
             style={styles.logo}
+            resizeMode={ResizeMode.CONTAIN}
             source={require("../../assets/logo_blue_video.mp4")}
-            resizeMode="contain"
             shouldPlay
             isLooping
             isMuted
