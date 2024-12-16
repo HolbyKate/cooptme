@@ -12,9 +12,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -28,11 +26,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": [
-        "CAMERA",
-        "android.permission.CAMERA",
-        "VIBRATE"
-      ],
+      "permissions": ["CAMERA", "android.permission.CAMERA", "VIBRATE"],
       "package": "com.anonymous.cooptmemobile"
     },
     "web": {
@@ -48,7 +42,9 @@
           ]
         }
       ],
-      "expo-video",
+      [
+        "expo-av"
+      ],
       [
         "expo-camera",
         {

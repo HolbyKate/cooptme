@@ -48,6 +48,11 @@
     <string>Allow $(PRODUCT_NAME) to access camera.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <key>UIAppFonts</key>
+    <array>
+      <string>Quicksand-Regular.ttf</string>
+      <string>Quicksand-Bold.ttf</string>
+    </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>

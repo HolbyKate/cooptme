@@ -1,5 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
-import { StatusBar } from "expo-status-bar";
+import React, { useRef, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,21 +7,27 @@ import {
   Dimensions,
   Animated,
 } from "react-native";
-import { Video, ResizeMode } from "expo-av";
+import { Video } from "expo-av";
 import QRCode from "react-native-qrcode-svg";
 import * as Linking from "expo-linking";
-import { LinearGradient } from "expo-linear-gradient";
+import LinearGradient from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
+type RootStackParamList = {
+  Login: undefined;
+  Home: undefined;
+};
+
 type HomeScreenProps = {
-  navigation: NativeStackNavigationProp<any>;
+  navigation: NativeStackNavigationProp<RootStackParamList, "Home">;
 };
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
-export default function HomeScreen({ navigation }: HomeScreenProps) {
-  const video = useRef<Video>(null);
+const HomeScreen = ({ navigation }: HomeScreenProps) => {
+  const video = useRef<any>(null);
   const contactUrl = "https://www.linkedin.com/in/cathyaugustin/";
   const qrSlideAnim = useRef(new Animated.Value(200)).current;
   const qrOpacityAnim = useRef(new Animated.Value(0)).current;
@@ -81,6 +86,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         locations={[0, 0.5, 1]}
         style={styles.background}
       />
+
       <TouchableOpacity
         style={styles.loginButton}
         onPress={() => navigation.navigate("Login")}
@@ -93,12 +99,12 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Video
             ref={video}
             style={styles.logo}
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay={true}
-            isLooping={true}
-            isMuted={true}
-            useNativeControls={false}
             source={require("../../assets/logo_blue_video.mp4")}
+            resizeMode="contain"
+            shouldPlay
+            isLooping
+            isMuted
+            useNativeControls={false}
           />
         </View>
 
@@ -133,14 +139,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           </TouchableOpacity>
         </Animated.View>
       </View>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#4247BD",
   },
   background: {
     position: "absolute",
@@ -155,6 +162,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
+    paddingTop: 60,
   },
   logoContainer: {
     width: windowWidth * 0.9,
@@ -166,7 +174,6 @@ const styles = StyleSheet.create({
   logo: {
     width: "100%",
     height: "100%",
-    resizeMode: "contain",
   },
   text: {
     fontFamily: "Quicksand-Bold",
@@ -205,6 +212,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 18,
     borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   qrButtonText: {
     fontFamily: "Quicksand-Bold",
@@ -230,3 +245,5 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 });
+
+export default HomeScreen;
