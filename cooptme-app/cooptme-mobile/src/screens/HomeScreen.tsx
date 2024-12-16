@@ -98,7 +98,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             isLooping={true}
             isMuted={true}
             useNativeControls={false}
-            source={require("../../assets/logo_bleu_video.mp4")}
+            source={require("../../assets/logo_blue_video.mp4")}
           />
         </View>
 
