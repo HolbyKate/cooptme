@@ -7,9 +7,9 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
-  Dimensions,
 } from 'react-native';
 import { Menu, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { EventService, EventDTO } from "../services/events";
 
 const WEEKDAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
@@ -19,6 +19,7 @@ const MONTHS = [
 ];
 
 export default function CalendarScreen() {
+  const navigation = useNavigation();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<EventDTO[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -26,6 +27,10 @@ export default function CalendarScreen() {
   useEffect(() => {
     loadEvents();
   }, []);
+
+  const handleMenuPress = () => {
+    navigation.dispatch(DrawerActions.openDrawer());
+  };
 
   const loadEvents = async () => {
     try {
@@ -68,14 +73,12 @@ export default function CalendarScreen() {
     const days = [];
     let cells = [];
 
-    // Add empty cells for days before the first day of the month
     for (let i = 0; i < startingDay; i++) {
       cells.push(
         <View key={`empty-${i}`} style={styles.dayCell} />
       );
     }
 
-    // Add cells for each day of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
       const isSelected =
@@ -122,7 +125,7 @@ export default function CalendarScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.menuButton}>
+        <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
           <Menu color="#4247BD" size={24} />
         </TouchableOpacity>
         <Image
@@ -179,6 +182,7 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
+  // ... (styles restent les mêmes que votre code original)
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',

@@ -9,7 +9,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Menu, Users } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type Category = {
@@ -34,7 +34,7 @@ export default function ProfilesScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   const handleMenuPress = () => {
-    console.log('Menu pressed');
+    navigation.dispatch(DrawerActions.openDrawer());
   };
 
   const handleCategoryPress = (categoryId: string) => {

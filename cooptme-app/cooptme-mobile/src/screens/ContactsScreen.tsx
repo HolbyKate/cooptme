@@ -9,6 +9,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Menu } from 'lucide-react-native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 
 type Contact = {
   id: string;
@@ -28,68 +29,14 @@ const contacts = [
     meetingPlace: 'Holberton School',
     photo: null,
   },
-  {
-    id: '2',
-    firstName: 'Thomas',
-    lastName: 'Martin',
-    function: 'Product Manager',
-    meetingPlace: 'Holberton School',
-    photo: null,
-  },
-  {
-    id: '3',
-    firstName: 'Sophie',
-    lastName: 'Bernard',
-    function: 'UX Designer',
-    meetingPlace: 'Holberton School',
-    photo: null,
-  },
-  {
-    id: '4',
-    firstName: 'Lucas',
-    lastName: 'Petit',
-    function: 'DevOps Engineer',
-    meetingPlace: 'Holberton School',
-    photo: null,
-  },
-  {
-    id: '5',
-    firstName: 'Emma',
-    lastName: 'Robert',
-    function: 'Data Scientist',
-    meetingPlace: 'Holberton School',
-    photo: null,
-  },
-  {
-    id: '6',
-    firstName: 'Hugo',
-    lastName: 'Moreau',
-    function: 'Backend Developer',
-    meetingPlace: 'Holberton School',
-    photo: null,
-  },
-  {
-    id: '7',
-    firstName: 'Léa',
-    lastName: 'Simon',
-    function: 'Frontend Developer',
-    meetingPlace: 'Holberton School',
-    photo: null,
-  },
-  {
-    id: '8',
-    firstName: 'Gabriel',
-    lastName: 'Michel',
-    function: 'Mobile Developer',
-    meetingPlace: 'Holberton School',
-    photo: null,
-  },
+  // ... autres contacts
 ];
 
 export default function ContactsScreen() {
+  const navigation = useNavigation();
+
   const handleMenuPress = () => {
-    // Implémentation future du menu
-    console.log('Menu pressed');
+    navigation.dispatch(DrawerActions.openDrawer());
   };
 
   const renderItem = ({ item }: { item: Contact }) => (

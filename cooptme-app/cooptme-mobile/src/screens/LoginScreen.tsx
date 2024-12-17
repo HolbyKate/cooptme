@@ -13,6 +13,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { authService } from '../services/api';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
+
 
 type LoginScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -71,7 +73,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   };
 
   const handleSubmit = async () => {
-    navigation.navigate('Dashboard');
+    navigation.navigate('AppStack');
     if (validate()) {
       setIsLoading(true);
       try {
@@ -85,7 +87,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             password,
           });
         }
-        navigation.navigate('Dashboard');
+        navigation.navigate('AppStack');
       } catch (error: any) {
         setErrorMessage(error.message || 'Une erreur est survenue');
       } finally {

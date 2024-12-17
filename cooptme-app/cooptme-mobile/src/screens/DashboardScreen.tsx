@@ -6,10 +6,17 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Dimensions,
+  SafeAreaView,
 } from 'react-native';
-import { Menu } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import {
+  Menu,
+  Bell
+} from 'lucide-react-native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+const screenWidth = Dimensions.get('window').width;
 
 const menuItems = [
   { id: 1, title: 'Contacts', screen: 'Contacts' },
@@ -20,16 +27,29 @@ const menuItems = [
   { id: 6, title: 'Job Offers', screen: 'JobOffers' },
 ];
 
+const NotificationCard = () => (
+  <View style={styles.notificationCard}>
+    <View style={styles.notificationHeader}>
+      <Text style={styles.notificationTitle}>Notifications</Text>
+      <Bell color="#4247BD" size={24} />
+    </View>
+    <ScrollView style={styles.notificationList}>
+      <Text style={styles.notificationItem}>Nouvelle notification 1</Text>
+      <Text style={styles.notificationItem}>Nouvelle notification 2</Text>
+      <Text style={styles.notificationItem}>Nouvelle notification 3</Text>
+    </ScrollView>
+  </View>
+);
+
 export default function DashboardScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   const handleMenuPress = () => {
-    // Implement menu logic
-    console.log('Menu pressed');
+    navigation.dispatch(DrawerActions.openDrawer());
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
           <Menu color="#4247BD" size={24} />
@@ -42,10 +62,7 @@ export default function DashboardScreen() {
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.newsletterSection}>
-          <Text style={styles.sectionTitle}>Newsletters</Text>
-          {/* Add newsletter content here */}
-        </View>
+        <NotificationCard />
 
         <View style={styles.menuGrid}>
           {menuItems.map((item) => (
@@ -66,7 +83,7 @@ export default function DashboardScreen() {
           <Text style={styles.scanButtonText}>Scan</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -80,7 +97,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    paddingTop: 50,
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -99,14 +115,38 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  newsletterSection: {
+  notificationCard: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
+    padding: 15,
     marginBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+    height: 200,
   },
-  sectionTitle: {
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  notificationTitle: {
     fontFamily: 'Quicksand-Bold',
     fontSize: 20,
     color: '#4247BD',
-    marginBottom: 15,
+  },
+  notificationList: {
+    flex: 1,
+  },
+  notificationItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    fontFamily: 'Quicksand-Regular',
+    color: '#333',
   },
   menuGrid: {
     flexDirection: 'row',
@@ -115,13 +155,13 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   menuItem: {
-    width: '30%',
-    aspectRatio: 1,
+    width: (screenWidth - 60) / 2,
+    height: 120,
     backgroundColor: '#F5F5F5',
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -130,7 +170,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontFamily: 'Quicksand-Bold',
-    fontSize: 14,
+    fontSize: 16,
     color: '#4247BD',
     textAlign: 'center',
   },

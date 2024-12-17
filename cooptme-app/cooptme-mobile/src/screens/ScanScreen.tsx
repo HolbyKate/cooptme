@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, Alert, SafeAreaView, TouchableOpacity } from 'react-native';
-import { Camera, CameraType, BarCodeEvent } from 'expo-camera';
-import { X } from "lucide-react-native";
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  Alert, 
+  SafeAreaView, 
+  TouchableOpacity 
+} from 'react-native';
+import { Camera } from 'expo-camera';
+import { X, Menu } from "lucide-react-native";
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type RootStackParamList = {
@@ -13,10 +21,14 @@ type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'QRScanner'>;
 };
 
-export default function QRScanner({ navigation }: Props) {
+export default function ScanScreen({ navigation }: Props) {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState<boolean>(false);
   const cameraRef = useRef<Camera | null>(null);
+
+  const handleMenuPress = () => {
+    navigation.dispatch(DrawerActions.openDrawer());
+  };
 
   useEffect(() => {
     requestPermissions();
@@ -32,7 +44,9 @@ export default function QRScanner({ navigation }: Props) {
     }
   };
 
-  const handleBarCodeScanned = ({ type, data }: BarCodeEvent) => {
+  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+    if (scanned) return;
+    
     setScanned(true);
     try {
       if (data.includes('linkedin.com')) {
@@ -55,60 +69,55 @@ export default function QRScanner({ navigation }: Props) {
     navigation.navigate('Profile', { profileData });
   };
 
-  if (hasPermission === null) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.text}>Demande d'accès à la caméra...</Text>
-      </SafeAreaView>
-    );
-  }
-
-  if (hasPermission === false) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.text}>Pas d'accès à la caméra</Text>
-        <TouchableOpacity style={styles.button} onPress={requestPermissions}>
-          <Text style={styles.buttonText}>Demander l'accès</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container}>
-      <Camera
-        ref={cameraRef}
-        style={styles.camera}
-        type={CameraType.back}
-        barCodeScannerSettings={{
-          barCodeTypes: ['qr'],
-        }}
-        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-      >
-        <View style={styles.overlay}>
-          <View style={styles.scanArea} />
+      {hasPermission === null ? (
+        <View>
+          <Text style={styles.text}>Demande d'accès à la caméra...</Text>
         </View>
-      </Camera>
+      ) : hasPermission === false ? (
+        <View>
+          <Text style={styles.text}>Pas d'accès à la caméra</Text>
+          <TouchableOpacity style={styles.button} onPress={requestPermissions}>
+            <Text style={styles.buttonText}>Demander l'accès</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          <Camera
+            ref={cameraRef}
+            style={styles.camera}
+            type="back"
+            onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+          >
+            <View style={styles.overlay}>
+              <View style={styles.scanArea} />
+            </View>
 
-      <View style={styles.guideContainer}>
-        <Text style={styles.guideText}>Placez le QR code LinkedIn dans le cadre</Text>
-      </View>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => navigation.goBack()}
+            >
+              <X color="#FFFFFF" size={24} />
+            </TouchableOpacity>
+          </Camera>
 
-      {scanned && (
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={() => setScanned(false)}
-        >
-          <Text style={styles.buttonText}>Scanner à nouveau</Text>
-        </TouchableOpacity>
+          <View style={styles.guideContainer}>
+            <Text style={styles.guideText}>
+              Placez le QR code LinkedIn dans le cadre
+            </Text>
+          </View>
+
+          {scanned && (
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => setScanned(false)}
+            >
+              <Text style={styles.buttonText}>Scanner à nouveau</Text>
+            </TouchableOpacity>
+          )}
+        </>
       )}
-
-      <TouchableOpacity
-        style={styles.closeButton}
-        onPress={() => navigation.goBack()}
-      >
-        <X color="#FFFFFF" size={24} />
-      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -117,6 +126,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 20,
+    paddingTop: 50,
+    zIndex: 1,
+  },
+  menuButton: {
+    padding: 8,
   },
   camera: {
     flex: 1,
@@ -170,5 +189,5 @@ const styles = StyleSheet.create({
     top: 50,
     right: 20,
     padding: 10,
-  }
+  },
 });

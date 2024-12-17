@@ -10,6 +10,7 @@ import {
   TextInput,
 } from "react-native";
 import { Menu, Search } from "lucide-react-native";
+import { useNavigation, DrawerActions } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type ChatListItem = {
@@ -44,12 +45,13 @@ const chatList: ChatListItem[] = [
   // Ajoutez plus de conversations ici
 ];
 
-export default function ChatScreen({
-  navigation,
-}: {
-  navigation: NativeStackNavigationProp<any>;
-}) {
+export default function ChatScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleMenuPress = () => {
+    navigation.dispatch(DrawerActions.openDrawer());
+  };
 
   const renderChatItem = ({ item }: { item: ChatListItem }) => (
     <TouchableOpacity
@@ -99,7 +101,7 @@ export default function ChatScreen({
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.menuButton}>
+        <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
           <Menu color="#4247BD" size={24} />
         </TouchableOpacity>
         <Image

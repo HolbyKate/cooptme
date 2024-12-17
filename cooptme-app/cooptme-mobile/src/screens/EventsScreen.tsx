@@ -11,13 +11,19 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Menu, Calendar, MapPin, Clock } from "lucide-react-native";
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { EventService, EventDTO } from "../services/events";
 import { Linking } from "react-native";
 
 export default function EventsScreen() {
+  const navigation = useNavigation();
   const [events, setEvents] = useState<EventDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const handleMenuPress = () => {
+    navigation.dispatch(DrawerActions.openDrawer());
+  };
 
   const loadEvents = async () => {
     try {
@@ -112,7 +118,7 @@ export default function EventsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => {}} style={styles.menuButton}>
+        <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
           <Menu color="#4247BD" size={24} />
         </TouchableOpacity>
         <Image
@@ -147,6 +153,7 @@ export default function EventsScreen() {
 }
 
 const styles = StyleSheet.create({
+  // ... (mêmes styles que votre code original)
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
