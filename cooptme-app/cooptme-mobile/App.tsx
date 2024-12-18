@@ -2,9 +2,10 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import { createDrawerNavigator, DrawerScreenProps } from '@react-navigation/drawer';
 import { Home, Mail, Users, Calendar, MessageCircle, ScanLine } from 'lucide-react-native';
-import { Link, Stack } from "expo-router";
+import { Link } from "expo-router";
+import { NavigatorScreenParams } from '@react-navigation/native';
 
 // Import screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -20,7 +21,7 @@ import ScanScreen from './src/screens/scanner/ScanScreen';
 
 import 'react-native-gesture-handler';
 
-// Types
+// Types de navigation
 export type RootStackParamList = {
   AuthStack: undefined;
   AppStack: undefined;
@@ -38,19 +39,40 @@ export type AuthStackParamList = {
 export type TabParamList = {
   Dashboard: undefined;
   Contacts: undefined;
-  Profiles: { userId?: string };
+  Profiles: { userId?: string; linkedInUrl?: string };
   Calendar: undefined;
   Chat: undefined;
   Scan: undefined;
 };
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+export type DrawerParamList = {
+  MainTabs: NavigatorScreenParams<TabParamList>;
+  Events: undefined;
+  ProfilesDrawer: undefined;
+};
+
+// Types des props pour les écrans du Drawer
+type ProfilesScreenDrawerProps = DrawerScreenProps<DrawerParamList, 'ProfilesDrawer'>;
+type EventsScreenDrawerProps = DrawerScreenProps<DrawerParamList, 'Events'>;
+type TabNavigatorDrawerProps = DrawerScreenProps<DrawerParamList, 'MainTabs'>;
+
+// Création des navigateurs
+const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
-const Drawer = createDrawerNavigator();
+const Drawer = createDrawerNavigator<DrawerParamList>();
 
-// Tab Navigator
-function TabNavigator() {
+// Wrappers des composants avec les types corrects
+const ProfilesScreenWrapper: React.FC<ProfilesScreenDrawerProps> = (props) => (
+  <ProfilesScreen {...props} />
+);
+
+const EventsScreenWrapper: React.FC<EventsScreenDrawerProps> = (props) => (
+  <EventsScreen {...props} />
+);
+
+// Tab Navigator avec types corrects
+function TabNavigator({ navigation, route }: TabNavigatorDrawerProps) {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -94,7 +116,11 @@ function TabNavigator() {
   );
 }
 
-// Drawer Navigator
+const TabNavigatorWrapper: React.FC<TabNavigatorDrawerProps> = (props) => (
+  <TabNavigator {...props} />
+);
+
+// Drawer Navigator avec les wrappers
 function DrawerNavigator() {
   return (
     <Drawer.Navigator
@@ -102,15 +128,18 @@ function DrawerNavigator() {
         headerShown: false,
       }}
     >
-      <Drawer.Screen 
-        name="MainTabs" 
-        component={TabNavigator}
+      <Drawer.Screen
+        name="MainTabs"
+        component={TabNavigatorWrapper}
         options={{ title: 'Home' }}
       />
-      <Drawer.Screen name="Events" component={EventsScreen} />
-      <Drawer.Screen 
-        name="ProfilesDrawer" 
-        component={ProfilesScreen}
+      <Drawer.Screen
+        name="Events"
+        component={EventsScreenWrapper}
+      />
+      <Drawer.Screen
+        name="ProfilesDrawer"
+        component={ProfilesScreenWrapper}
         options={{ title: 'Profiles' }}
       />
     </Drawer.Navigator>
@@ -127,18 +156,19 @@ function AuthNavigator() {
   );
 }
 
+// App principal
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator
+      <RootStack.Navigator
         screenOptions={{
           headerShown: false
         }}
       >
-        <Stack.Screen name="AuthStack" component={AuthNavigator} />
-        <Stack.Screen name="AppStack" component={DrawerNavigator} />
-        <Stack.Screen name="ChatConversation" component={ChatConversationScreen} />
-      </Stack.Navigator>
+        <RootStack.Screen name="AuthStack" component={AuthNavigator} />
+        <RootStack.Screen name="AppStack" component={DrawerNavigator} />
+        <RootStack.Screen name="ChatConversation" component={ChatConversationScreen} />
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 }

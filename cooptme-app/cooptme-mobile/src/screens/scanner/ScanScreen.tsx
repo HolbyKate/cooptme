@@ -1,5 +1,4 @@
 import { Camera, CameraView } from "expo-camera";
-import { Stack } from "expo-router";
 import {
   AppState,
   Linking,
@@ -8,10 +7,14 @@ import {
   StatusBar,
   StyleSheet,
 } from "react-native";
-import { Overlay } from "./Overlay";
 import { useEffect, useRef } from "react";
+import { Overlay } from "./Overlay";
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { TabParamList } from '../../../App';
 
-export default function Home() {
+type Props = NativeStackScreenProps<TabParamList, 'Scan'>;
+
+export default function ScanScreen({ navigation }: Props) {
   const qrLock = useRef(false);
   const appState = useRef(AppState.currentState);
 
@@ -31,26 +34,28 @@ export default function Home() {
     };
   }, []);
 
+  const handleBarCodeScanned = async ({ data }: { data: string }) => {
+    if (data && !qrLock.current) {
+      qrLock.current = true;
+      if (data.includes('linkedin.com/in/')) {
+        // Ici vous pouvez ajouter la logique pour scanner les profils LinkedIn
+        // Par exemple, naviguer vers un écran de détails
+        navigation.navigate('Profiles', { linkedInUrl: data });
+      } else {
+        setTimeout(async () => {
+          await Linking.openURL(data);
+        }, 500);
+      }
+    }
+  };
+
   return (
     <SafeAreaView style={StyleSheet.absoluteFillObject}>
-      <Stack.Screen
-        options={{
-          title: "Overview",
-          headerShown: false,
-        }}
-      />
       {Platform.OS === "android" ? <StatusBar hidden /> : null}
       <CameraView
         style={StyleSheet.absoluteFillObject}
         facing="back"
-        onBarcodeScanned={({ data }) => {
-          if (data && !qrLock.current) {
-            qrLock.current = true;
-            setTimeout(async () => {
-              await Linking.openURL(data);
-            }, 500);
-          }
-        }}
+        onBarcodeScanned={handleBarCodeScanned}
       />
       <Overlay />
     </SafeAreaView>
