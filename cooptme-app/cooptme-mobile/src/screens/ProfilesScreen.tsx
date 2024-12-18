@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -10,31 +10,30 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { CompositeScreenProps } from '@react-navigation/native';
 import { Menu, Users, X } from 'lucide-react-native';
-import { DrawerActions } from '@react-navigation/native';
+import { DrawerActions, CompositeScreenProps } from '@react-navigation/native';
 import { DrawerScreenProps } from '@react-navigation/drawer';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import WebView from 'react-native-webview';
 import { DrawerParamList, TabParamList } from '../../App';
+import LinkedInBrowser from '../components/LinkedInBrowser';
 import {
   LinkedInProfile,
-  LINKEDIN_INJECTION_SCRIPT,
-  saveLinkedInProfile,
-  getLinkedInProfiles
+  getProfiles,
 } from '../utils/linkedinScraper';
 
+// Définition des types
+type Props = CompositeScreenProps<
+  DrawerScreenProps<DrawerParamList, 'ProfilesDrawer'>,
+  NativeStackScreenProps<TabParamList>
+>;
 
 type Category = {
   id: string;
   title: string;
   count: number;
 };
-type Props = CompositeScreenProps<
-  DrawerScreenProps<DrawerParamList, 'ProfilesDrawer'>,
-  NativeStackScreenProps<TabParamList>
->;
 
+// Données des catégories
 const categories: Category[] = [
   { id: '1', title: 'IT', count: 145 },
   { id: '2', title: 'Marketing', count: 89 },
@@ -46,55 +45,38 @@ const categories: Category[] = [
   { id: '8', title: 'Product Owner', count: 32 },
   { id: '9', title: 'Customer Care Manager', count: 28 },
 ];
-export default function ProfilesScreen({ navigation, route }: DrawerScreenProps<DrawerParamList, 'ProfilesDrawer'>) {
-  const linkedInUrl = route.params?.linkedInUrl ?? undefined;
-  const [isWebViewVisible, setIsWebViewVisible] = useState(false);
-  const [scannedProfiles, setScannedProfiles] = useState<LinkedInProfile[]>([]);
-  const webViewRef = useRef<WebView>(null);
 
+export default function ProfilesScreen({ navigation, route }: Props) {
+  // États
+  const linkedInUrl = route.params?.linkedInUrl;
+  const [isLinkedInBrowserVisible, setIsLinkedInBrowserVisible] = useState(false);
+  const [scannedProfiles, setScannedProfiles] = useState<LinkedInProfile[]>([]);
+
+  // Effets
   useEffect(() => {
     loadScannedProfiles();
   }, []);
 
   useEffect(() => {
     if (linkedInUrl) {
-      setIsWebViewVisible(true);
+      setIsLinkedInBrowserVisible(true);
     }
   }, [linkedInUrl]);
 
+  // Gestionnaires d'événements
   const loadScannedProfiles = async () => {
     try {
-      const profiles = await getLinkedInProfiles();
+      const profiles = await getProfiles();
       setScannedProfiles(profiles);
     } catch (error) {
       console.error('Erreur lors du chargement des profils:', error);
     }
   };
 
-  const handleLinkedInProfile = async (profileData: LinkedInProfile) => {
-    try {
-      await saveLinkedInProfile(profileData);
-      await loadScannedProfiles();
-      setIsWebViewVisible(false);
-      Alert.alert('Succès', 'Profil LinkedIn enregistré avec succès');
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible de sauvegarder le profil');
-    }
-  };
-
-  const handleWebViewMessage = (event: { nativeEvent: { data: string } }) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      if (data.error) {
-        Alert.alert('Erreur', 'Impossible d\'extraire les informations du profil');
-        setIsWebViewVisible(false);
-        return;
-      }
-      handleLinkedInProfile(data);
-    } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue lors du traitement du profil');
-      setIsWebViewVisible(false);
-    }
+  const handleProfileScraped = async (profile: LinkedInProfile) => {
+    Alert.alert('Succès', 'Profil LinkedIn enregistré avec succès');
+    setIsLinkedInBrowserVisible(false);
+    await loadScannedProfiles();
   };
 
   const handleMenuPress = () => {
@@ -105,8 +87,15 @@ export default function ProfilesScreen({ navigation, route }: DrawerScreenProps<
     console.log('Category pressed:', categoryId);
   };
 
+  const handleProfilePress = (profile: LinkedInProfile) => {
+    // TODO: Implémenter la navigation vers les détails du profil
+    console.log('Profile pressed:', profile.id);
+  };
+
+  // Rendu
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
           <Menu color="#4247BD" size={24} />
@@ -122,6 +111,7 @@ export default function ProfilesScreen({ navigation, route }: DrawerScreenProps<
         <Text style={styles.title}>Profils</Text>
         <Text style={styles.subtitle}>Découvrez les profils par catégorie</Text>
 
+        {/* Section des profils scannés */}
         {scannedProfiles.length > 0 && (
           <View style={styles.scannedProfilesSection}>
             <Text style={styles.sectionTitle}>Profils scannés récemment</Text>
@@ -134,7 +124,7 @@ export default function ProfilesScreen({ navigation, route }: DrawerScreenProps<
                 <TouchableOpacity
                   key={profile.id}
                   style={styles.profileCard}
-                  onPress={() => {/* Navigation vers détails */}}
+                  onPress={() => handleProfilePress(profile)}
                 >
                   <Text style={styles.profileName}>
                     {profile.firstName} {profile.lastName}
@@ -147,6 +137,7 @@ export default function ProfilesScreen({ navigation, route }: DrawerScreenProps<
           </View>
         )}
 
+        {/* Grille des catégories */}
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
@@ -167,40 +158,18 @@ export default function ProfilesScreen({ navigation, route }: DrawerScreenProps<
         </ScrollView>
       </View>
 
-      <Modal
-        visible={isWebViewVisible}
-        animationType="slide"
-        onRequestClose={() => setIsWebViewVisible(false)}
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity
-              onPress={() => setIsWebViewVisible(false)}
-              style={styles.closeButton}
-            >
-              <X color="#4247BD" size={24} />
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Analyser le profil</Text>
-          </View>
-
-          <WebView
-            ref={webViewRef}
-            source={{ uri: linkedInUrl || '' }}
-            injectedJavaScript={LINKEDIN_INJECTION_SCRIPT}
-            onMessage={handleWebViewMessage}
-            onError={() => {
-              Alert.alert('Erreur', 'Impossible de charger le profil');
-              setIsWebViewVisible(false);
-            }}
-          />
-        </SafeAreaView>
-      </Modal>
+      {/* LinkedIn Browser Modal */}
+      <LinkedInBrowser
+        isVisible={isLinkedInBrowserVisible}
+        profileUrl={linkedInUrl || ''}
+        onClose={() => setIsLinkedInBrowserVisible(false)}
+        onProfileScraped={handleProfileScraped}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  // Styles existants
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -276,28 +245,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Quicksand-Regular',
     fontSize: 14,
     color: '#666',
-  },
-
-  // Nouveaux styles pour LinkedIn
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
-  },
-  closeButton: {
-    padding: 5,
-  },
-  modalTitle: {
-    fontFamily: 'Quicksand-Bold',
-    fontSize: 18,
-    color: '#4247BD',
-    marginLeft: 15,
   },
   scannedProfilesSection: {
     marginBottom: 20,
