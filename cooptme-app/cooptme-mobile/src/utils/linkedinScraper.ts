@@ -1,5 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const LINKEDIN_AUTH_KEY = 'linkedin_auth';
+const STORAGE_KEY = 'scanned_profiles';
+
+export interface LinkedInAuth {
+  isLoggedIn: boolean;
+  cookies?: string;
+}
+
 export interface LinkedInProfile {
   id: string;
   firstName: string;
@@ -11,29 +19,14 @@ export interface LinkedInProfile {
   profileUrl: string;
 }
 
-const STORAGE_KEY = 'scanned_profiles';
-const LINKEDIN_AUTH_KEY = 'linkedin_auth';
-
-export interface LinkedInAuth {
-  isLoggedIn: boolean;
-  cookies?: string;
-}
-
 export const LINKEDIN_LOGIN_SCRIPT = `
 (function() {
-  // Vérifier si on est sur la page de login
-  const emailInput = document.querySelector('input[name="session_key"]');
-  const passwordInput = document.querySelector('input[name="session_password"]');
-  if (emailInput && passwordInput) {
-    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'LOGIN_PAGE' }));
-  }
-
-  // Vérifier si on est connecté
   const nav = document.querySelector('.nav');
   if (nav) {
+    const cookies = document.cookie;
     window.ReactNativeWebView.postMessage(JSON.stringify({
-      type: 'AUTH_STATUS',
-      isLoggedIn: true
+      type: 'LOGIN_SUCCESS',
+      cookies: cookies
     }));
   }
 })();
@@ -86,7 +79,8 @@ export const saveLinkedInAuth = async (auth: LinkedInAuth): Promise<void> => {
   try {
     await AsyncStorage.setItem(LINKEDIN_AUTH_KEY, JSON.stringify(auth));
   } catch (error) {
-    console.error('Error saving LinkedIn auth:', error);
+    console.error('Erreur lors de la sauvegarde de l\'authentification:', error);
+    throw error;
   }
 };
 
@@ -95,7 +89,7 @@ export const getLinkedInAuth = async (): Promise<LinkedInAuth | null> => {
     const data = await AsyncStorage.getItem(LINKEDIN_AUTH_KEY);
     return data ? JSON.parse(data) : null;
   } catch (error) {
-    console.error('Error getting LinkedIn auth:', error);
+    console.error('Erreur lors de la récupération de l\'authentification:', error);
     return null;
   }
 };
@@ -107,14 +101,14 @@ export const saveProfile = async (profile: LinkedInProfile): Promise<void> => {
 
     const existingIndex = profiles.findIndex(p => p.profileUrl === profile.profileUrl);
     if (existingIndex >= 0) {
-      profiles[existingIndex] = { ...profile, scannedAt: new Date().toISOString() };
+      profiles[existingIndex] = profile;
     } else {
       profiles.push(profile);
     }
 
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
   } catch (error) {
-    console.error('Error saving profile:', error);
+    console.error('Erreur lors de la sauvegarde du profil:', error);
     throw error;
   }
 };
@@ -124,7 +118,7 @@ export const getProfiles = async (): Promise<LinkedInProfile[]> => {
     const data = await AsyncStorage.getItem(STORAGE_KEY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error('Error getting profiles:', error);
+    console.error('Erreur lors de la récupération des profils:', error);
     return [];
   }
 };
