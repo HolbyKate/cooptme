@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Home, Mail, Users, Calendar, MessageCircle, ScanLine } from 'lucide-react-native';
+import { Link, Stack } from "expo-router";
 
 // Import screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -15,7 +16,7 @@ import ChatScreen from './src/screens/ChatScreen';
 import ChatConversationScreen from './src/screens/ChatConversationScreen';
 import ContactsScreen from './src/screens/ContactsScreen';
 import ProfilesScreen from './src/screens/ProfilesScreen';
-import ScanScreen from './src/screens/ScanScreen';
+import ScanScreen from './src/screens/scanner/ScanScreen';
 
 import 'react-native-gesture-handler';
 

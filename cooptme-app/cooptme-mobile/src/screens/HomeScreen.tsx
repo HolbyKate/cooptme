@@ -12,7 +12,6 @@ import QRCode from "react-native-qrcode-svg";
 import * as Linking from "expo-linking";
 import { StatusBar } from "expo-status-bar";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useNavigation, DrawerActions } from '@react-navigation/native';
 
 
 type RootStackParamList = {

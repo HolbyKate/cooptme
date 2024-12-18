@@ -13,7 +13,6 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { authService } from '../services/api';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
 
 
 type LoginScreenProps = {

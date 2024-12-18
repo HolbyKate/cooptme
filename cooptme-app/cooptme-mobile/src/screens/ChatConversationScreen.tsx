@@ -67,7 +67,7 @@ export default function ChatConversation({ navigation, route }: ChatConversation
 
       setMessages(prev => [...prev, message]);
       setNewMessage('');
-      
+
       // Scroll to bottom
       setTimeout(() => {
         flatListRef.current?.scrollToEnd();
