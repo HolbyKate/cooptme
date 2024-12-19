@@ -33,29 +33,29 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      [
-        "expo-font",
-        {
-          "fonts": [
-            "./assets/fonts/Quicksand-Regular.ttf",
-            "./assets/fonts/Quicksand-Bold.ttf"
+          [
+            "expo-font",
+            {
+              "fonts": [
+                "./assets/fonts/Quicksand-Regular.ttf",
+                "./assets/fonts/Quicksand-Bold.ttf"
+              ]
+            }
+          ],
+          [
+            "expo-av"
+          ],
+          [
+            "expo-camera",
+            {
+              "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
+              "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
+              "recordAudioAndroid": true
+            }
+          ],
+          [
+            "expo-router"
           ]
-        }
-      ],
-      [
-        "expo-av"
-      ],
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
-          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
-          "recordAudioAndroid": true
-        }
-      ],
-      [
-        "expo-router",
-      ]
-    ]
+        ]
   }
 }
