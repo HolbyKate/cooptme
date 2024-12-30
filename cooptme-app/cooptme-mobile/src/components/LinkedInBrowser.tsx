@@ -52,16 +52,25 @@ export default function LinkedInBrowser({
           break;
 
         case "PROFILE_DATA":
-  if (data.profile) {
-    try {
-      await saveProfile(data.profile);
-      onProfileScraped(data.profile);
+          if (data.profile) {
+            try {
+              await saveProfile(data.profile);
+              onProfileScraped(data.profile);
+            } catch (error) {
+              console.error("Erreur lors de la sauvegarde du profil:", error);
+              // Ajouter une notification d'erreur ici
+            }
+          }
+          break;
+
+        case "SCRAPING_ERROR":
+          console.error("Erreur de scraping:", data.error);
+          break;
+      }
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde du profil:", error);
-      // Ajouter une notification d'erreur ici
+      console.error("Erreur lors du traitement du message:", error);
     }
-  }
-  break;
+  };
 
   return (
     <Modal visible={isVisible} animationType="slide" onRequestClose={onClose}>
