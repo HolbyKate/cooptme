@@ -96,6 +96,7 @@ export const getLinkedInAuth = async (): Promise<LinkedInAuth | null> => {
 
 export const saveProfile = async (profile: LinkedInProfile): Promise<void> => {
   try {
+    // Sauvegarder localement
     const existingData = await AsyncStorage.getItem(STORAGE_KEY);
     const profiles: LinkedInProfile[] = existingData ? JSON.parse(existingData) : [];
 
@@ -107,6 +108,9 @@ export const saveProfile = async (profile: LinkedInProfile): Promise<void> => {
     }
 
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
+
+    // Synchroniser avec PostgreSQL
+    await profileService.syncProfile(profile);
   } catch (error) {
     console.error('Erreur lors de la sauvegarde du profil:', error);
     throw error;
