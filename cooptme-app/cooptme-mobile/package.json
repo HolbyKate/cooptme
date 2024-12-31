@@ -38,6 +38,7 @@
     "expo-module-scripts": "4.0.2",
     "expo-router": "4.0.14",
     "expo-status-bar": "2.0.0",
+    "lodash": "^4.17.21",
     "lucide-react-native": "^0.468.0",
     "papaparse": "5.4.1",
     "pg": "^8.13.1",
@@ -59,6 +60,7 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@react-native-community/cli": "latest",
+    "@types/lodash": "^4.17.13",
     "@types/pg": "^8.11.10",
     "@types/react": "18.3.12",
     "babel-plugin-module-resolver": "5.0.2",

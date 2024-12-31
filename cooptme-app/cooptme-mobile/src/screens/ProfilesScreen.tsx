@@ -1,195 +1,141 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   View,
   Text,
   Image,
+  FlatList,
   TouchableOpacity,
-  ScrollView,
   SafeAreaView,
-  Alert,
-  Modal,
+  Dimensions,
 } from "react-native";
-import { Menu, Users, X } from "lucide-react-native";
-import { DrawerActions, CompositeScreenProps } from "@react-navigation/native";
-import { DrawerScreenProps } from "@react-navigation/drawer";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { DrawerParamList, TabParamList } from "../../App";
-import LinkedInBrowser from "../components/LinkedInBrowser";
-import LinkedInLogin from "../components/LinkedInLogin";
-import { LinkedInProfile, getProfiles, getLinkedInAuth } from "../utils/linkedinScraper";
+import { Menu, MapPin } from "lucide-react-native";
+import { useNavigation, DrawerActions } from "@react-navigation/native";
+import { generateContacts, Contact, categories } from "./ProfileGenerator";
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+const windowWidth = Dimensions.get("window").width;
 
-// Définition des types
-type Props = CompositeScreenProps<
-  DrawerScreenProps<DrawerParamList, "ProfilesDrawer">,
-  NativeStackScreenProps<TabParamList>
->;
+// Générer 100 contacts de test
+const contacts = generateContacts(100);
 
-type Category = {
-  id: string;
-  title: string;
-  count: number;
+type RootStackParamList = {
+  ProfileDetail: { contact: Contact };
 };
 
-// Données des catégories
-const categories: Category[] = [
-  { id: "1", title: "IT", count: 145 },
-  { id: "2", title: "Marketing", count: 89 },
-  { id: "3", title: "RH", count: 67 },
-  { id: "4", title: "Finance", count: 54 },
-  { id: "5", title: "Communication", count: 78 },
-  { id: "6", title: "Students", count: 234 },
-  { id: "7", title: "Project Manager", count: 45 },
-  { id: "8", title: "Product Owner", count: 32 },
-  { id: "9", title: "Customer Care Manager", count: 28 },
-];
+type ProfilesScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'ProfileDetail'
+>;
 
-export default function ProfilesScreen({ navigation, route }: Props) {
-  // États
-  const linkedInUrl = route.params?.linkedInUrl;
-  const [isLinkedInBrowserVisible, setIsLinkedInBrowserVisible] =
-    useState(false);
-  const [scannedProfiles, setScannedProfiles] = useState<LinkedInProfile[]>([]);
-
-  // Effets
-  useEffect(() => {
-    loadScannedProfiles();
-  }, []);
-
-  useEffect(() => {
-    if (linkedInUrl) {
-      setIsLinkedInBrowserVisible(true);
-    }
-  }, [linkedInUrl]);
-
-  // Gestionnaires d'événements
-  const loadScannedProfiles = async () => {
-    try {
-      const profiles = await getProfiles();
-      setScannedProfiles(profiles);
-    } catch (error) {
-      console.error("Erreur lors du chargement des profils:", error);
-    }
-  };
-
-  const handleProfileScraped = async (profile: LinkedInProfile) => {
-    Alert.alert("Succès", "Profil LinkedIn enregistré avec succès");
-    setIsLinkedInBrowserVisible(false);
-    await loadScannedProfiles();
-  };
+export default function ProfilesScreen() {
+  const navigation = useNavigation<ProfilesScreenNavigationProp>();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const handleMenuPress = () => {
     navigation.dispatch(DrawerActions.openDrawer());
   };
 
-  const handleCategoryPress = (categoryId: string) => {
-    console.log("Category pressed:", categoryId);
+  const handleCategoryPress = (categoryTitle: string) => {
+    setSelectedCategory(categoryTitle);
   };
 
-  const handleProfilePress = (profile: LinkedInProfile) => {
-    // TODO: Implémenter la navigation vers les détails du profil
-    console.log("Profile pressed:", profile.id);
+  const handleContactPress = (contact: Contact) => {
+    navigation.navigate('ProfileDetail', { contact });
   };
 
-  const [isLoginNeeded, setIsLoginNeeded] = useState(false);
-
-  useEffect(() => {
-    checkLinkedInAuth();
-  }, []);
-
-  const checkLinkedInAuth = async () => {
-    const auth = await getLinkedInAuth();
-    if (!auth?.isLoggedIn && linkedInUrl) {
-      setIsLoginNeeded(true);
-    }
+  const handleBackToCategories = () => {
+    setSelectedCategory(null);
   };
 
-  const handleLoginSuccess = () => {
-    setIsLoginNeeded(false);
-    setIsLinkedInBrowserVisible(true);
+  const renderCategoryItem = ({ item }: { item: (typeof categories)[0] }) => {
+    const count = contacts.filter(
+      (contact) => contact.category === item.title
+    ).length;
+
+    return (
+      <TouchableOpacity
+        style={styles.categoryCard}
+        onPress={() => handleCategoryPress(item.title)}
+      >
+        <Text style={styles.categoryTitle}>{item.title}</Text>
+        <Text style={styles.categoryCount}>{count} contacts</Text>
+      </TouchableOpacity>
+    );
   };
+
+  const renderContactItem = ({ item }: { item: Contact }) => (
+    <TouchableOpacity
+    style={styles.contactCard}
+    onPress={() => handleContactPress(item)}
+  >
+    <View style={styles.photoContainer}>
+      {item.photo ? (
+        <Image
+          source={{ uri: item.photo }}
+          style={styles.photo}
+          defaultSource={require('../../assets/default-avatar.png')}
+        />
+      ) : (
+        <View style={styles.photoPlaceholder}>
+          <Text style={styles.photoPlaceholderText}>
+            {item.firstName[0]}{item.lastName[0]}
+          </Text>
+        </View>
+      )}
+      <View style={styles.meetingBadge}>
+        <MapPin size={12} color="#FFFFFF" />
+        <Text style={styles.meetingBadgeText} numberOfLines={1}>
+          {item.meetingPlace}
+        </Text>
+      </View>
+    </View>
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
           <Menu color="#4247BD" size={24} />
         </TouchableOpacity>
-        <Image
-          source={require("../../assets/logo_blue.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        {selectedCategory && (
+          <TouchableOpacity
+            onPress={handleBackToCategories}
+            style={styles.backButton}
+          >
+            <Text style={styles.backButtonText}>← Retour aux catégories</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>Profils</Text>
-        <Text style={styles.subtitle}>Découvrez les profils par catégorie</Text>
+        <Text style={styles.title}>
+          {selectedCategory ? selectedCategory : "Catégories"}
+        </Text>
 
-        {/* Section des profils scannés */}
-        {scannedProfiles.length > 0 && (
-          <View style={styles.scannedProfilesSection}>
-            <Text style={styles.sectionTitle}>Profils scannés récemment</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.recentProfilesScroll}
-            >
-              {scannedProfiles.map((profile) => (
-                <TouchableOpacity
-                  key={profile.id}
-                  style={styles.profileCard}
-                  onPress={() => handleProfilePress(profile)}
-                >
-                  <Text style={styles.profileName}>
-                    {profile.firstName} {profile.lastName}
-                  </Text>
-                  <Text style={styles.profileTitle}>{profile.title}</Text>
-                  <Text style={styles.profileCompany}>{profile.company}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
+        {selectedCategory ? (
+          // Liste des contacts de la catégorie sélectionnée
+          <FlatList
+            data={contacts.filter(
+              (contact) => contact.category === selectedCategory
+            )}
+            renderItem={renderContactItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
+          />
+        ) : (
+          // Grille des catégories
+          <FlatList
+            data={categories}
+            renderItem={renderCategoryItem}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            contentContainerStyle={styles.categoriesList}
+          />
         )}
-
-        {/* Grille des catégories */}
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <View style={styles.categoriesGrid}>
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={styles.categoryCard}
-                onPress={() => handleCategoryPress(category.id)}
-              >
-                <Users color="#4247BD" size={24} />
-                <Text style={styles.categoryTitle}>{category.title}</Text>
-                <Text style={styles.categoryCount}>
-                  {category.count} profils
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
       </View>
-
-      {/* LinkedIn Browser Modal */}
-      <LinkedInBrowser
-        isVisible={isLinkedInBrowserVisible}
-        profileUrl={linkedInUrl || ""}
-        onClose={() => setIsLinkedInBrowserVisible(false)}
-        onProfileScraped={handleProfileScraped}
-      />
-
-      <LinkedInLogin
-      visible={isLoginNeeded}
-      onLoginSuccess={handleLoginSuccess}
-      onClose={() => setIsLoginNeeded(false)}
-    />
     </SafeAreaView>
   );
 }
@@ -227,89 +173,120 @@ const styles = StyleSheet.create({
     fontFamily: "Quicksand-Bold",
     fontSize: 24,
     color: "#4247BD",
-    marginBottom: 8,
+    marginBottom: 20,
   },
-  subtitle: {
-    fontFamily: "Quicksand-Regular",
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 24,
+  categoriesContainer: {
+    marginBottom: 20,
   },
-  scrollContent: {
-    paddingBottom: 20,
-  },
-  categoriesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 15,
+  categoriesList: {
+    width: "100%",
   },
   categoryCard: {
-    width: "48%",
+    flex: 1,
     backgroundColor: "#F5F5F5",
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
     alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-    marginBottom: 5,
+    width: (windowWidth - 50) / 2,
   },
   categoryTitle: {
     fontFamily: "Quicksand-Bold",
-    fontSize: 16,
-    color: "#333",
-    marginTop: 12,
-    marginBottom: 4,
-    textAlign: "center",
+    fontSize: 14,
+    color: "#4247BD",
+    marginBottom: 5,
   },
   categoryCount: {
     fontFamily: "Quicksand-Regular",
-    fontSize: 14,
+    fontSize: 12,
     color: "#666",
   },
-  scannedProfilesSection: {
-    marginBottom: 20,
+  listContainer: {
+    paddingBottom: 20,
   },
-  sectionTitle: {
-    fontFamily: "Quicksand-Bold",
-    fontSize: 18,
-    color: "#4247BD",
-    marginBottom: 15,
-  },
-  recentProfilesScroll: {
-    marginBottom: 20,
-  },
-  profileCard: {
-    backgroundColor: "#F5F5F5",
-    borderRadius: 12,
+  contactCard: {
+    flexDirection: "row",
     padding: 15,
-    marginRight: 15,
-    width: 200,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    marginBottom: 15,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
   },
-  profileName: {
+  photoContainer: {
+    marginRight: 15,
+  },
+  photo: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  photoPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#E8E8E8",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  photoPlaceholderText: {
+    fontFamily: "Quicksand-Bold",
+    fontSize: 18,
+    color: "#4247BD",
+  },
+  contactInfo: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  name: {
     fontFamily: "Quicksand-Bold",
     fontSize: 16,
     color: "#333",
-    marginBottom: 5,
+    marginBottom: 4,
   },
-  profileTitle: {
+  function: {
     fontFamily: "Quicksand-Regular",
     fontSize: 14,
     color: "#666",
-    marginBottom: 3,
+    marginBottom: 2,
   },
-  profileCompany: {
+  meetingPlace: {
     fontFamily: "Quicksand-Regular",
     fontSize: 12,
     color: "#999",
+    marginBottom: 2,
+  },
+  category: {
+    fontFamily: "Quicksand-Regular",
+    fontSize: 12,
+    color: "#4247BD",
+  },
+  meetingBadge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: '#4247BD',
+    borderRadius: 12,
+    padding: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    maxWidth: 100,
+  },
+  meetingBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    marginLeft: 2,
+    fontFamily: 'Quicksand-Medium',
+  },
+  backButton: {
+    marginLeft: 20,
+  },
+  backButtonText: {
+    color: '#4247BD',
+    fontFamily: 'Quicksand-Medium',
+    fontSize: 16,
   },
 });
