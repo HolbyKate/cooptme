@@ -15,6 +15,7 @@ import {
   ScanLine,
 } from "lucide-react-native";
 import { NavigatorScreenParams } from "@react-navigation/native";
+import { AuthProvider } from './src/contexts/AuthContext';
 
 // Import screens
 import HomeScreen from "./src/screens/HomeScreen";
@@ -51,11 +52,11 @@ export type TabParamList = {
   Dashboard: undefined;
   Contacts: undefined;
   Profiles: { userId?: string; linkedInUrl?: string };
+  ProfileDetail: { contact: Contact };
   Calendar: undefined;
   Chat: undefined;
   Scan: undefined;
   Test: undefined;
-  ProfileDetail: { contact: Contact };
 };
 
 export type DrawerParamList = {
@@ -78,26 +79,25 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
-// Wrappers des composants
-const DashboardScreenWrapper: React.FC<TabScreenProps<"Dashboard">> = (props) =>
+const DashboardScreenWrapper: React.FC<TabScreenProps<"Dashboard">> = (props) => 
   <DashboardScreen {...(props as any)} />;
 
-const ContactsScreenWrapper: React.FC<TabScreenProps<"Contacts">> = (props) =>
+const ContactsScreenWrapper: React.FC<TabScreenProps<"Contacts">> = (props) => 
   <ContactsScreen {...(props as any)} />;
 
-const ProfilesTabScreenWrapper: React.FC<TabScreenProps<"Profiles">> = (props) =>
+const ProfilesTabScreenWrapper: React.FC<TabScreenProps<"Profiles">> = (props) => 
   <ProfilesScreen {...(props as any)} />;
 
 const ProfileDetailScreenWrapper: React.FC<TabScreenProps<"ProfileDetail">> = (props) =>
   <ProfileDetailScreen {...(props as any)} />;
 
-const CalendarScreenWrapper: React.FC<TabScreenProps<"Calendar">> = (props) =>
+const CalendarScreenWrapper: React.FC<TabScreenProps<"Calendar">> = (props) => 
   <CalendarScreen {...(props as any)} />;
 
-const ChatScreenWrapper: React.FC<TabScreenProps<"Chat">> = (props) =>
+const ChatScreenWrapper: React.FC<TabScreenProps<"Chat">> = (props) => 
   <ChatScreen {...(props as any)} />;
 
-const ScanScreenWrapper: React.FC<TabScreenProps<"Scan">> = (props) =>
+const ScanScreenWrapper: React.FC<TabScreenProps<"Scan">> = (props) => 
   <ScanScreen {...(props as any)} />;
 
 const TestScreenWrapper: React.FC<TabScreenProps<"Test">> = (props) =>
@@ -155,10 +155,10 @@ function TabNavigator({ navigation, route }: TabNavigatorDrawerProps) {
 const EventsScreenWrapper: React.FC<EventsScreenDrawerProps> = (props) =>
   <EventsScreen {...(props as any)} />;
 
-const ProfilesDrawerScreenWrapper: React.FC<ProfilesScreenDrawerProps> = (props) => 
+const ProfilesDrawerScreenWrapper: React.FC<ProfilesScreenDrawerProps> = (props) =>
   <ProfilesScreen {...(props as any)} />;
 
-const TabNavigatorWrapper: React.FC<TabNavigatorDrawerProps> = (props) => 
+const TabNavigatorWrapper: React.FC<TabNavigatorDrawerProps> = (props) =>
   <TabNavigator {...props} />;
 
 function DrawerNavigator() {
@@ -207,6 +207,22 @@ export default function App() {
           component={ChatConversationScreen}
         />
       </RootStack.Navigator>
+      <AuthProvider>
+      <NavigationContainer>
+        <RootStack.Navigator
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <RootStack.Screen name="AuthStack" component={AuthNavigator} />
+          <RootStack.Screen name="AppStack" component={DrawerNavigator} />
+          <RootStack.Screen
+            name="ChatConversation"
+            component={ChatConversationScreen}
+          />
+        </RootStack.Navigator>
+      </NavigationContainer>
+    </AuthProvider>
     </NavigationContainer>
   );
 }

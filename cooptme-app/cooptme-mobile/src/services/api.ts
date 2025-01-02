@@ -15,7 +15,7 @@ export const authService = {
     try {
       // Pour le développement, simulons une réponse
       console.log('Tentative de connexion:', email);
-      return { success: true };
+      return { token: 'fake-token-123', success: true };
     } catch (error: any) {
       throw new Error(error.message || 'Erreur de connexion');
     }
@@ -30,9 +30,34 @@ export const authService = {
     try {
       // Pour le développement, simulons une réponse
       console.log('Tentative d\'inscription:', data);
-      return { success: true };
+      return { token: 'fake-token-123', success: true };
     } catch (error: any) {
       throw new Error(error.message || 'Erreur d\'inscription');
     }
   },
+
+  async socialLogin(data: {
+    type: 'google' | 'apple';
+    token: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+  }) {
+    try {
+      // Pour le développement, simulons une réponse
+      console.log('Tentative de connexion sociale:', data);
+    return { success: true, token: 'fake-token-123' };
+  } catch (error: any) {
+    throw new Error(error.message || 'Erreur de connexion sociale');
+  }
+  },
+
+  async logout() {
+    try {
+      await AsyncStorage.removeItem('userToken');
+      return { success: true };
+    } catch (error: any) {
+      throw new Error(error.message || 'Erreur de déconnexion');
+    }
+  }
 };

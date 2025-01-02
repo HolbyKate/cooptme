@@ -1,47 +1,47 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { DatabaseProfile, User } from "../types";
 
 const DB_KEY = "linkedin_profiles_db";
+const USERS_KEY = "users_db";
 
-interface DatabaseProfile {
-  profile_url: string;
-  first_name: string;
-  last_name: string;
-  title?: string;
-  company?: string;
-  location?: string;
-  scanned_at?: string;
-  updated_at?: string;
-}
+type DatabaseEntity = DatabaseProfile | User;
+type DatabaseTable = "profiles" | "users";
 
-interface QueryResult {
-  rows: DatabaseProfile[];
+interface QueryResult<T> {
+  rows: T[];
 }
 
 export const database = {
-  async query(operation: string, params?: DatabaseProfile[]): Promise<QueryResult> {
+  async query<T extends DatabaseEntity>(
+    operation: string,
+    params?: T[],
+    table: DatabaseTable = "profiles"
+  ): Promise<QueryResult<T>> {
     try {
-      const data = await AsyncStorage.getItem(DB_KEY);
-      const profiles: DatabaseProfile[] = data ? JSON.parse(data) : [];
+      const dbKey = table === "users" ? USERS_KEY : DB_KEY;
+      const data = await AsyncStorage.getItem(dbKey);
+      const items: T[] = data ? JSON.parse(data) : [];
 
       switch (operation) {
         case "SELECT":
-          return { rows: profiles };
+          return { rows: items };
         case "INSERT":
           if (params && params[0]) {
-            profiles.push(params[0]);
-            await AsyncStorage.setItem(DB_KEY, JSON.stringify(profiles));
+            items.push(params[0]);
+            await AsyncStorage.setItem(dbKey, JSON.stringify(items));
             return { rows: [params[0]] };
           }
           return { rows: [] };
         case "UPDATE":
           if (params && params[0]) {
-            const index = profiles.findIndex(
-              (p) => p.profile_url === params[0].profile_url
+            const key = table === "users" ? "id" : "profile_url";
+            const index = items.findIndex(
+              (item: any) => item[key] === (params[0] as any)[key]
             );
             if (index !== -1) {
-              profiles[index] = { ...profiles[index], ...params[0] };
-              await AsyncStorage.setItem(DB_KEY, JSON.stringify(profiles));
-              return { rows: [profiles[index]] };
+              items[index] = { ...items[index], ...params[0] };
+              await AsyncStorage.setItem(dbKey, JSON.stringify(items));
+              return { rows: [items[index]] };
             }
           }
           return { rows: [] };

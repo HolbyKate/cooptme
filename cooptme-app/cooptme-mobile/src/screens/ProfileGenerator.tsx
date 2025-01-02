@@ -6,6 +6,8 @@ export type Contact = {
   lastName: string;
   function: string;
   meetingPlace: string;
+  company: string;
+  email: string;
   photo: string;
   category: string;
   gender: 'male' | 'female';
@@ -31,6 +33,15 @@ export const categories: Array<{ id: string; title: CategoryTitle; count: number
   { id: "8", title: "Product Owner", count: 32 },
   { id: "9", title: "Customer Care Manager", count: 28 },
   { id: "10", title: "Other", count: 28 }
+];
+
+const enterprises = [
+  "Tech Solutions", "Digital Agency", "StartupLab", "Innovation Corp", "Data Analytics",
+  "Web Services", "Mobile Apps", "Cloud Computing", "AI Research", "Software House",
+  "Future Tech", "Smart Systems", "Digital Factory", "Tech Innovators", "Code Masters",
+  "Data Dynamics", "Cloud Nine", "App Warriors", "Digital Dreams", "Tech Giants",
+  "Innovation Hub", "Smart Solutions", "Digital Minds", "Future Systems", "Code Crafters",
+  "ByteForge", "DataFlow", "CloudScale", "AppSphere", "TechMatrix"
 ];
 
 const jobTitles: JobTitlesType = {
@@ -148,19 +159,22 @@ export const generateContact = (): Contact => {
   const titles = jobTitles[selectedCategory.title];
   const randomTitle = _.sample(titles) || "Other";
 
-  if (!firstName) {
-    throw new Error('firstName cannot be undefined');
+  if (!firstName || !lastName) {
+    throw new Error('firstName or lastName cannot be undefined');
   }
 
+  const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`;
   const gender: 'male' | 'female' = femaleNames.includes(firstName) ? 'female' : 'male';
   const photoId = Math.floor(Math.random() * 100);
 
   return {
     id: Math.random().toString(36).substr(2, 9),
     firstName,
-    lastName: lastName || '',
+    lastName,
     function: randomTitle,
+    company: _.sample(enterprises) || 'Entreprise',
     meetingPlace: _.sample(meetingPlaces) || '',
+    email,
     photo: `https://randomuser.me/api/portraits/${gender}/${photoId}.jpg`,
     category: selectedCategory.title,
     gender,

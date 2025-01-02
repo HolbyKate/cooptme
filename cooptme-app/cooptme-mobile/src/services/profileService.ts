@@ -1,12 +1,12 @@
-import { database, DatabaseProfile } from "../config/database";
-import { LinkedInProfile } from "../utils/linkedinScraper";
+import { database } from "../config/database";
+import { DatabaseProfile, LinkedInProfile } from "../types";
 
 export const profileService = {
   async syncProfile(profile: LinkedInProfile): Promise<void> {
     try {
-      const { rows: existing } = await database.query("SELECT");
+      const { rows: existing } = await database.query<DatabaseProfile>("SELECT", []);
       const existingProfile = existing.find(
-        (p: DatabaseProfile) => p.profile_url === profile.profileUrl
+        (p) => p.profile_url === profile.profileUrl
       );
 
       const profileData: DatabaseProfile = {
@@ -21,9 +21,9 @@ export const profileService = {
       };
 
       if (existingProfile) {
-        await database.query("UPDATE", [profileData]);
+        await database.query<DatabaseProfile>("UPDATE", [profileData]);
       } else {
-        await database.query("INSERT", [profileData]);
+        await database.query<DatabaseProfile>("INSERT", [profileData]);
       }
     } catch (error) {
       console.error("Erreur lors de la synchronisation du profil:", error);
@@ -33,7 +33,7 @@ export const profileService = {
 
   async getProfiles(): Promise<LinkedInProfile[]> {
     try {
-      const { rows } = await database.query("SELECT");
+      const { rows } = await database.query<DatabaseProfile>("SELECT");
       return rows.map(this.mapDbProfileToLinkedInProfile);
     } catch (error) {
       console.error("Erreur lors de la récupération des profils:", error);
@@ -49,8 +49,8 @@ export const profileService = {
       title: dbProfile.title || "",
       company: dbProfile.company || "",
       location: dbProfile.location || "",
-      scannedAt: dbProfile.scanned_at || new Date().toISOString(),
       profileUrl: dbProfile.profile_url,
+      scannedAt: dbProfile.scanned_at || new Date().toISOString(),
     };
   },
 };
