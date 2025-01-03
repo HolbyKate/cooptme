@@ -20,14 +20,16 @@
     "module": "esnext",
     "moduleResolution": "node",
     "noFallthroughCasesInSwitch": true,
-    "target": "esnext"
+    "target": "esnext",
+    "typeRoots": ["./types", "./node_modules/@types"],
   },
   "include": [
     "src",
     "**/*.ts",
     "**/*.tsx",
     "index.tsx",
-    "App.tsx"
+    "App.tsx",
+    "env.d.ts"
   ],
   "exclude": [
     "node_modules",

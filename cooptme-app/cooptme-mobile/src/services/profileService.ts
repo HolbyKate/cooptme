@@ -1,10 +1,10 @@
 import { database } from "../config/database";
 import { DatabaseProfile, LinkedInProfile } from "../types";
 
-export const profileService = {
+class ProfileService {
   async syncProfile(profile: LinkedInProfile): Promise<void> {
     try {
-      const { rows: existing } = await database.query<DatabaseProfile>("SELECT", []);
+      const { rows: existing } = await database.query<DatabaseProfile>("SELECT");
       const existingProfile = existing.find(
         (p) => p.profile_url === profile.profileUrl
       );
@@ -29,7 +29,7 @@ export const profileService = {
       console.error("Erreur lors de la synchronisation du profil:", error);
       throw error;
     }
-  },
+  }
 
   async getProfiles(): Promise<LinkedInProfile[]> {
     try {
@@ -39,9 +39,9 @@ export const profileService = {
       console.error("Erreur lors de la récupération des profils:", error);
       throw error;
     }
-  },
+  }
 
-  mapDbProfileToLinkedInProfile(dbProfile: DatabaseProfile): LinkedInProfile {
+  private mapDbProfileToLinkedInProfile(dbProfile: DatabaseProfile): LinkedInProfile {
     return {
       id: `profile_${Date.now()}`,
       firstName: dbProfile.first_name,
@@ -52,7 +52,8 @@ export const profileService = {
       profileUrl: dbProfile.profile_url,
       scannedAt: dbProfile.scanned_at || new Date().toISOString(),
     };
-  },
-};
+  }
+}
 
+export const profileService = new ProfileService();
 export default profileService;

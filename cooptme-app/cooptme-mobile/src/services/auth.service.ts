@@ -1,166 +1,167 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { encode as base64encode } from 'base-64';
-import jwtDecode from "jwt-decode";
-import { v4 as uuidv4 } from 'uuid';
-import database, { User } from "../config/database";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import {
+    GoogleSignin,
+    statusCodes,
+} from "@react-native-google-signin/google-signin";
 import appleAuth from "@invertase/react-native-apple-authentication";
-import { JWT_SECRET } from "@env";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { api, authApi, type AuthResponse, type User } from "../services/api";
 
-export class AuthService {
-  private generateToken(userId: string): string {
-    // Créer un JWT simple pour React Native
-    const header = {
-      alg: 'HS256',
-      typ: 'JWT'
-    };
-    
-    const payload = {
-      userId,
-      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 heures
-    };
-    
-    const encodedHeader = base64encode(JSON.stringify(header));
-    const encodedPayload = base64encode(JSON.stringify(payload));
-    const signature = base64encode(
-      JSON.stringify({ secret: JWT_SECRET })
-    );
-    
-    return `${encodedHeader}.${encodedPayload}.${signature}`;
-  }
+class AuthService {
+    async login(email: string, password: string): Promise<AuthResponse> {
+        try {
+            const response = await authApi.login(email, password);
 
-  private async hashPassword(password: string): Promise<string> {
-    // Simple hash pour React Native
-    return base64encode(password + JWT_SECRET);
-  }
-
-  async createUser(userData: {
-    email: string;
-    password?: string;
-    firstName?: string;
-    lastName?: string;
-    authProvider?: string;
-    authProviderId?: string;
-  }): Promise<{ user: User; token: string }> {
-    // Vérifier si l'email existe déjà
-    const existingUsers = await database.query<User>("users", "SELECT");
-    const userExists = existingUsers.rows.some(
-      (user) => user.email === userData.email
-    );
-
-    if (userExists) {
-      throw new Error("Cet email est déjà utilisé");
+            if (response.success && response.token) {
+                const dataToStore: [string, string][] = [
+                    ["userToken", response.token],
+                    ["userData", JSON.stringify(response.user || {})],
+                ];
+                await AsyncStorage.multiSet(dataToStore);
+            }
+            return response;
+        } catch (error: any) {
+            console.error("Login Error:", error);
+            return {
+                success: false,
+                error: error.message || "Erreur de connexion",
+            };
+        }
     }
 
-    const passwordHash = userData.password
-      ? await this.hashPassword(userData.password)
-      : null;
+    async register(data: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        password: string;
+    }): Promise<AuthResponse> {
+        try {
+            const response = await authApi.register(data);
 
-    const newUser: User = {
-      id: uuidv4(),
-      email: userData.email,
-      password_hash: passwordHash || undefined,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      auth_provider: userData.authProvider,
-      auth_provider_id: userData.authProviderId,
-      created_at: new Date().toISOString(),
-    };
-
-    await database.query<User>("users", "INSERT", [newUser]);
-    const token = this.generateToken(newUser.id);
-
-    return { user: newUser, token };
-  }
-
-  async loginWithEmail(email: string, password: string) {
-    const users = await database.query<User>("users", "SELECT");
-    const user = users.rows.find((u) => u.email === email);
-
-    if (!user || !user.password_hash) {
-      throw new Error("Email ou mot de passe incorrect");
+            if (response.success && response.token) {
+                const dataToStore: [string, string][] = [
+                    ["userToken", response.token],
+                    ["userData", JSON.stringify(response.user || {})],
+                ];
+                await AsyncStorage.multiSet(dataToStore);
+            }
+            return response;
+        } catch (error: any) {
+            console.error("Registration Error:", error);
+            return {
+                success: false,
+                error: error.message || "Erreur lors de l'inscription",
+            };
+        }
     }
 
-    const hashedPassword = await this.hashPassword(password);
-    const isValid = hashedPassword === user.password_hash;
+    async loginWithGoogle(): Promise<AuthResponse> {
+        try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
 
-    if (!isValid) {
-      throw new Error("Email ou mot de passe incorrect");
+            if (!userInfo?.user?.email) {
+                throw new Error("Impossible de récupérer les informations Google");
+            }
+
+            const tokens = await GoogleSignin.getTokens();
+            const response = await authApi.socialLogin({
+                type: "google",
+                token: tokens.accessToken,
+                email: userInfo.user.email,
+                firstName: userInfo.user.givenName || "",
+                lastName: userInfo.user.familyName || "",
+            });
+
+            if (response.success && response.token) {
+                const dataToStore: [string, string][] = [
+                    ["userToken", response.token],
+                    ["userData", JSON.stringify(response.user || {})],
+                ];
+                await AsyncStorage.multiSet(dataToStore);
+            }
+            return response;
+        } catch (error: any) {
+            console.error("Google Sign-In Error:", error);
+            const errorMessage =
+                error.code === statusCodes.SIGN_IN_CANCELLED
+                    ? "Connexion annulée"
+                    : error.code === statusCodes.IN_PROGRESS
+                        ? "Connexion déjà en cours"
+                        : error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE
+                            ? "Google Play Services non disponible"
+                            : "Erreur de connexion avec Google";
+
+            return { success: false, error: errorMessage };
+        }
     }
 
-    // Mise à jour du last_login
-    const updatedUser: User = {
-      ...user,
-      last_login: new Date().toISOString(),
-    };
+    async loginWithApple(): Promise<AuthResponse> {
+        try {
+            const appleAuthResponse = await appleAuth.performRequest({
+                requestedOperation: appleAuth.Operation.LOGIN,
+                requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+            });
 
-    await database.query<User>("users", "UPDATE", [updatedUser]);
-    const token = this.generateToken(user.id);
+            if (!appleAuthResponse.identityToken) {
+                throw new Error("Pas de token reçu de Apple");
+            }
 
-    return { user: updatedUser, token };
-  }
+            const response = await authApi.socialLogin({
+                type: "apple",
+                token: appleAuthResponse.identityToken,
+                email: appleAuthResponse.email || "",
+                firstName: appleAuthResponse.fullName?.givenName || "",
+                lastName: appleAuthResponse.fullName?.familyName || "",
+            });
 
-  async loginWithGoogle() {
-    try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-
-      const users = await database.query<User>("users", "SELECT");
-      let user = users.rows.find(
-        (u) =>
-          u.auth_provider === "google" &&
-          u.auth_provider_id === userInfo.user.id
-      );
-
-      if (!user) {
-        const result = await this.createUser({
-          email: userInfo.user.email,
-          firstName: userInfo.user.givenName,
-          lastName: userInfo.user.familyName,
-          authProvider: "google",
-          authProviderId: userInfo.user.id,
-        });
-        user = result.user;
-      }
-
-      const token = this.generateToken(user.id);
-      return { user, token };
-    } catch (error) {
-      throw new Error("Erreur de connexion avec Google");
+            if (response.success && response.token) {
+                const dataToStore: [string, string][] = [
+                    ["userToken", response.token],
+                    ["userData", JSON.stringify(response.user || {})],
+                ];
+                await AsyncStorage.multiSet(dataToStore);
+            }
+            return response;
+        } catch (error: any) {
+            console.error("Apple Sign-In Error:", error);
+            return {
+                success: false,
+                error: error.message || "Erreur de connexion avec Apple",
+            };
+        }
     }
-  }
 
-  async loginWithApple() {
-    try {
-      const appleAuthResponse = await appleAuth.performRequest({
-        requestedOperation: appleAuth.Operation.LOGIN,
-        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
-      });
+    async logout(): Promise<{ success: boolean; error?: string }> {
+        try {
+            try {
+                const isGoogleSignedIn = await GoogleSignin.isSignedIn();
+                if (isGoogleSignedIn) {
+                    await GoogleSignin.signOut();
+                }
+            } catch (error) {
+                console.warn("Erreur lors de la déconnexion Google:", error);
+            }
 
-      const users = await database.query<User>("users", "SELECT");
-      let user = users.rows.find(
-        (u) =>
-          u.auth_provider === "apple" &&
-          u.auth_provider_id === appleAuthResponse.user
-      );
-
-      if (!user) {
-        const result = await this.createUser({
-          email: appleAuthResponse.email!,
-          firstName: appleAuthResponse.fullName?.givenName,
-          lastName: appleAuthResponse.fullName?.familyName,
-          authProvider: "apple",
-          authProviderId: appleAuthResponse.user,
-        });
-        user = result.user;
-      }
-
-      const token = this.generateToken(user.id);
-      return { user, token };
-    } catch (error) {
-      throw new Error("Erreur de connexion avec Apple");
+            await AsyncStorage.multiRemove(["userToken", "userData"]);
+            return { success: true };
+        } catch (error: any) {
+            console.error("Logout Error:", error);
+            return {
+                success: false,
+                error: error.message || "Erreur lors de la déconnexion",
+            };
+        }
     }
-  }
+
+    async getCurrentUser(): Promise<User | null> {
+        try {
+            const userDataString = await AsyncStorage.getItem("userData");
+            return userDataString ? JSON.parse(userDataString) : null;
+        } catch (error) {
+            console.error("Erreur lors de la récupération des données utilisateur:", error);
+            return null;
+        }
+    }
 }
 
 export default new AuthService();
