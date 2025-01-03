@@ -85,15 +85,23 @@ class AuthService {
 
     async socialLogin(socialData: SocialLoginData): Promise<AuthResponse> {
         try {
+            if (!socialData.email) {
+                throw new Error("L'email est requis pour la connexion sociale");
+            }
+
+            // Validation des données
+            const userData: User = {
+                id: crypto.randomUUID(), // Ou générez un ID unique d'une autre manière
+                email: socialData.email,
+                firstName: socialData.firstName || '',
+                lastName: socialData.lastName || '',
+                createdAt: new Date().toISOString()
+            };
+
             const response: AuthResponse = {
                 success: true,
-                token: 'fake-token-123',
-                user: {
-                    id: '1',
-                    email: socialData.email,
-                    firstName: socialData.firstName,
-                    lastName: socialData.lastName
-                }
+                token: 'fake-token-123', // Remplacez par un vrai token en production
+                user: userData
             };
 
             await this.storeUserData(response);

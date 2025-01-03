@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
 import {
-    StyleSheet,
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    ScrollView,
-    KeyboardAvoidingView,
-    Platform,
-    ActivityIndicator,
-    Dimensions,
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
@@ -20,8 +20,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import authService from "../services/auth.service";
 import type { User, AuthResponse, SocialLoginData } from "../types";
 import {
-    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
+  EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
 } from '@env';
 
 type RootStackParamList = {
@@ -109,19 +109,25 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       const userInfo = await GoogleSignin.signIn();
       const tokens = await GoogleSignin.getTokens();
 
-      if (!userInfo?.user?.email) {
-        throw new Error("Impossible de récupérer les informations Google");
+      const { email, familyName, givenName } = userInfo.user;
+
+      if (!email || !givenName || !familyName) {
+        throw new Error("Informations utilisateur incomplètes");
       }
 
       const result = await authService.socialLogin({
         type: 'google',
         token: tokens.accessToken,
-        email: userInfo.user.email,
-        firstName: userInfo.user.givenName || '',
-        lastName: userInfo.user.familyName || ''
+        email,
+        firstName: givenName,
+        lastName: familyName
       });
 
-      if (result.success && result.token) {
+      if (result.success && result.token && result.user) {
+        await AsyncStorage.multiSet([
+          ['userToken', result.token],
+          ['userData', JSON.stringify(result.user)]
+        ]);
         navigation.replace("AppStack");
       } else {
         throw new Error(result.error || "Erreur de connexion Google");
@@ -174,11 +180,11 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       const response = isLogin
         ? await authService.login(email, password)
         : await authService.register({
-            email,
-            password,
-            firstName,
-            lastName,
-          });
+          email,
+          password,
+          firstName,
+          lastName,
+        });
 
       if (response.success && response.token) {
         navigation.replace("AppStack");
