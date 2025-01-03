@@ -14,6 +14,8 @@ import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { generateContacts, Contact, categories } from './ProfileGenerator';
 import { TabParamList } from '../../App';
+import profileService from '../services/profileService';
+import { LinkedInProfile } from '../types';
 
 const windowWidth = Dimensions.get('window').width;
 

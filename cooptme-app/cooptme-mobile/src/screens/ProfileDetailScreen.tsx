@@ -11,6 +11,8 @@ import {
 import { ArrowLeft } from "lucide-react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { Contact } from "./ProfileGenerator";
+import profileService from '../services/profileService';
+import { LinkedInProfile } from '../types';
 
 export default function ProfileDetailScreen() {
   const navigation = useNavigation();

@@ -1,28 +1,28 @@
 import React, { useState, useEffect } from "react";
 import {
-  StyleSheet,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  Dimensions,
+    StyleSheet,
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    ScrollView,
+    KeyboardAvoidingView,
+    Platform,
+    ActivityIndicator,
+    Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import appleAuth from "@invertase/react-native-apple-authentication";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AntDesign } from "@expo/vector-icons";
-import authService from "../services/auth.service";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import authService from "../services/auth.service";
+import type { User, AuthResponse, SocialLoginData } from "../types";
 import {
-  EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-  EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
+    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
 } from '@env';
-
 
 type RootStackParamList = {
   AppStack: undefined;
@@ -60,7 +60,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           offlineAccess: true,
         });
       } catch (error) {
-        console.error("Google Sign-In configuration error:", error);
+        console.error("Erreur de configuration Google Sign-In:", error);
         updateErrorMessage("Erreur de configuration Google Sign-In");
       }
     };
@@ -71,21 +71,18 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const validate = () => {
     const newErrors: ValidationErrors = {};
 
-    // Validation email
     if (!email) {
       newErrors.email = "L'email est requis";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Format d'email invalide";
     }
 
-    // Validation mot de passe
     if (!password) {
       newErrors.password = "Le mot de passe est requis";
     } else if (password.length < 8) {
       newErrors.password = "Le mot de passe doit contenir au moins 8 caractères";
     }
 
-    // Validation nom et prénom pour l'inscription
     if (!isLogin) {
       if (!firstName.trim()) {
         newErrors.firstName = "Le prénom est requis";
@@ -105,40 +102,33 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     setSocialLoading(false);
   };
 
-  const clearForm = () => {
-    setFirstName("");
-    setLastName("");
-    setEmail("");
-    setPassword("");
-    setErrors({});
-    setErrorMessage("");
-  };
-
   const handleGoogleSignIn = async () => {
     setSocialLoading(true);
     try {
       await GoogleSignin.hasPlayServices();
-      const result = await authService.loginWithGoogle();
+      const userInfo = await GoogleSignin.signIn();
+      const tokens = await GoogleSignin.getTokens();
+
+      if (!userInfo?.user?.email) {
+        throw new Error("Impossible de récupérer les informations Google");
+      }
+
+      const result = await authService.socialLogin({
+        type: 'google',
+        token: tokens.accessToken,
+        email: userInfo.user.email,
+        firstName: userInfo.user.givenName || '',
+        lastName: userInfo.user.familyName || ''
+      });
 
       if (result.success && result.token) {
-        await AsyncStorage.setItem("userToken", result.token);
         navigation.replace("AppStack");
       } else {
         throw new Error(result.error || "Erreur de connexion Google");
       }
     } catch (error: any) {
-      console.error("Google Sign-In Error:", error);
-      let errorMessage = "Une erreur s'est produite lors de la connexion avec Google";
-
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        errorMessage = "Connexion Google annulée";
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        errorMessage = "Connexion Google déjà en cours";
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        errorMessage = "Google Play Services n'est pas disponible";
-      }
-
-      updateErrorMessage(errorMessage);
+      console.error("Erreur Google Sign-In:", error);
+      updateErrorMessage(error.message || "Erreur de connexion avec Google");
     } finally {
       setSocialLoading(false);
     }
@@ -147,17 +137,31 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const handleAppleSignIn = async () => {
     setSocialLoading(true);
     try {
-      const result = await authService.loginWithApple();
+      const appleAuthResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      if (!appleAuthResponse.identityToken) {
+        throw new Error("Pas de token reçu de Apple");
+      }
+
+      const result = await authService.socialLogin({
+        type: 'apple',
+        token: appleAuthResponse.identityToken,
+        email: appleAuthResponse.email || '',
+        firstName: appleAuthResponse.fullName?.givenName || '',
+        lastName: appleAuthResponse.fullName?.familyName || ''
+      });
 
       if (result.success && result.token) {
-        await AsyncStorage.setItem("userToken", result.token);
         navigation.replace("AppStack");
       } else {
         throw new Error(result.error || "Erreur de connexion Apple");
       }
     } catch (error: any) {
-      console.error("Apple Sign-In Error:", error);
-      updateErrorMessage("Une erreur s'est produite lors de la connexion avec Apple");
+      console.error("Erreur Apple Sign-In:", error);
+      updateErrorMessage(error.message || "Erreur de connexion avec Apple");
     } finally {
       setSocialLoading(false);
     }
@@ -177,16 +181,15 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           });
 
       if (response.success && response.token) {
-        await AsyncStorage.setItem("userToken", response.token);
         navigation.replace("AppStack");
       } else {
         throw new Error(response.error || "Échec de l'authentification");
       }
     } catch (error: any) {
-      console.error("Authentication Error:", error);
-      updateErrorMessage(
-        error.message || "Une erreur s'est produite lors de l'authentification"
-      );
+      console.error("Erreur d'authentification:", error);
+      updateErrorMessage(error.message || "Une erreur s'est produite");
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -1,164 +1,131 @@
-import {
-    GoogleSignin,
-    statusCodes,
-} from "@react-native-google-signin/google-signin";
-import appleAuth from "@invertase/react-native-apple-authentication";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { api, authApi, type AuthResponse, type User } from "../services/api";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import { User, AuthResponse, SocialLoginData } from '../types';
+
+const API_URL = 'http://192.168.31.149:3000/api';
+
+export const api = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        if (error.response?.status === 401) {
+            await AsyncStorage.multiRemove(['userToken', 'userData']);
+        }
+        return Promise.reject(error);
+    }
+);
 
 class AuthService {
+    private async storeUserData(response: AuthResponse) {
+        if (response.success && response.token) {
+            try {
+                await AsyncStorage.multiSet([
+                    ['userToken', response.token],
+                    ['userData', JSON.stringify(response.user || {})],
+                ]);
+            } catch (error) {
+                console.error('Erreur lors du stockage des données:', error);
+                throw error;
+            }
+        }
+    }
+
     async login(email: string, password: string): Promise<AuthResponse> {
         try {
-            const response = await authApi.login(email, password);
+            // Pour le développement, utilisez cette réponse simulée
+            const response: AuthResponse = {
+                success: true,
+                token: 'fake-token-123',
+                user: { id: '1', email, firstName: '', lastName: '' }
+            };
 
-            if (response.success && response.token) {
-                const dataToStore: [string, string][] = [
-                    ["userToken", response.token],
-                    ["userData", JSON.stringify(response.user || {})],
-                ];
-                await AsyncStorage.multiSet(dataToStore);
-            }
+            await this.storeUserData(response);
             return response;
         } catch (error: any) {
-            console.error("Login Error:", error);
+            console.error('Erreur de connexion:', error);
             return {
                 success: false,
-                error: error.message || "Erreur de connexion",
+                error: error.message || 'Erreur de connexion'
             };
         }
     }
 
-    async register(data: {
+    async register(userData: {
         firstName: string;
         lastName: string;
         email: string;
         password: string;
     }): Promise<AuthResponse> {
         try {
-            const response = await authApi.register(data);
+            const response: AuthResponse = {
+                success: true,
+                token: 'fake-token-123',
+                user: {
+                    id: '1',
+                    ...userData,
+                }
+            };
 
-            if (response.success && response.token) {
-                const dataToStore: [string, string][] = [
-                    ["userToken", response.token],
-                    ["userData", JSON.stringify(response.user || {})],
-                ];
-                await AsyncStorage.multiSet(dataToStore);
-            }
+            await this.storeUserData(response);
             return response;
         } catch (error: any) {
-            console.error("Registration Error:", error);
+            console.error('Erreur d\'inscription:', error);
             return {
                 success: false,
-                error: error.message || "Erreur lors de l'inscription",
+                error: error.message || 'Erreur d\'inscription'
             };
         }
     }
 
-    async loginWithGoogle(): Promise<AuthResponse> {
+    async socialLogin(socialData: SocialLoginData): Promise<AuthResponse> {
         try {
-            await GoogleSignin.hasPlayServices();
-            const userInfo = await GoogleSignin.signIn();
+            const response: AuthResponse = {
+                success: true,
+                token: 'fake-token-123',
+                user: {
+                    id: '1',
+                    email: socialData.email,
+                    firstName: socialData.firstName,
+                    lastName: socialData.lastName
+                }
+            };
 
-            if (!userInfo?.user?.email) {
-                throw new Error("Impossible de récupérer les informations Google");
-            }
-
-            const tokens = await GoogleSignin.getTokens();
-            const response = await authApi.socialLogin({
-                type: "google",
-                token: tokens.accessToken,
-                email: userInfo.user.email,
-                firstName: userInfo.user.givenName || "",
-                lastName: userInfo.user.familyName || "",
-            });
-
-            if (response.success && response.token) {
-                const dataToStore: [string, string][] = [
-                    ["userToken", response.token],
-                    ["userData", JSON.stringify(response.user || {})],
-                ];
-                await AsyncStorage.multiSet(dataToStore);
-            }
+            await this.storeUserData(response);
             return response;
         } catch (error: any) {
-            console.error("Google Sign-In Error:", error);
-            const errorMessage =
-                error.code === statusCodes.SIGN_IN_CANCELLED
-                    ? "Connexion annulée"
-                    : error.code === statusCodes.IN_PROGRESS
-                        ? "Connexion déjà en cours"
-                        : error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE
-                            ? "Google Play Services non disponible"
-                            : "Erreur de connexion avec Google";
-
-            return { success: false, error: errorMessage };
-        }
-    }
-
-    async loginWithApple(): Promise<AuthResponse> {
-        try {
-            const appleAuthResponse = await appleAuth.performRequest({
-                requestedOperation: appleAuth.Operation.LOGIN,
-                requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
-            });
-
-            if (!appleAuthResponse.identityToken) {
-                throw new Error("Pas de token reçu de Apple");
-            }
-
-            const response = await authApi.socialLogin({
-                type: "apple",
-                token: appleAuthResponse.identityToken,
-                email: appleAuthResponse.email || "",
-                firstName: appleAuthResponse.fullName?.givenName || "",
-                lastName: appleAuthResponse.fullName?.familyName || "",
-            });
-
-            if (response.success && response.token) {
-                const dataToStore: [string, string][] = [
-                    ["userToken", response.token],
-                    ["userData", JSON.stringify(response.user || {})],
-                ];
-                await AsyncStorage.multiSet(dataToStore);
-            }
-            return response;
-        } catch (error: any) {
-            console.error("Apple Sign-In Error:", error);
+            console.error(`Erreur de connexion ${socialData.type}:`, error);
             return {
                 success: false,
-                error: error.message || "Erreur de connexion avec Apple",
+                error: error.message || `Erreur de connexion ${socialData.type}`
             };
         }
     }
 
     async logout(): Promise<{ success: boolean; error?: string }> {
         try {
-            try {
-                const isGoogleSignedIn = await GoogleSignin.isSignedIn();
-                if (isGoogleSignedIn) {
-                    await GoogleSignin.signOut();
-                }
-            } catch (error) {
-                console.warn("Erreur lors de la déconnexion Google:", error);
-            }
-
-            await AsyncStorage.multiRemove(["userToken", "userData"]);
+            await AsyncStorage.multiRemove(['userToken', 'userData']);
             return { success: true };
         } catch (error: any) {
-            console.error("Logout Error:", error);
+            console.error('Erreur de déconnexion:', error);
             return {
                 success: false,
-                error: error.message || "Erreur lors de la déconnexion",
+                error: error.message || 'Erreur de déconnexion'
             };
         }
     }
 
     async getCurrentUser(): Promise<User | null> {
         try {
-            const userDataString = await AsyncStorage.getItem("userData");
-            return userDataString ? JSON.parse(userDataString) : null;
+            const userData = await AsyncStorage.getItem('userData');
+            return userData ? JSON.parse(userData) : null;
         } catch (error) {
-            console.error("Erreur lors de la récupération des données utilisateur:", error);
+            console.error('Erreur lors de la récupération de l\'utilisateur:', error);
             return null;
         }
     }

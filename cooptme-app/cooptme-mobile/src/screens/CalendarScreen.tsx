@@ -55,7 +55,7 @@ export default function CalendarScreen() {
     date: new Date().toISOString(),
     time: "",
     location: "",
-    contact: "",
+    contact: "" as string | undefined,
   });
 
   const contacts = [
