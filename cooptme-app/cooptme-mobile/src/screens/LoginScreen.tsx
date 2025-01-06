@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   View, TextInput, TouchableOpacity, Text, StyleSheet,
   Platform, KeyboardAvoidingView, ScrollView, Image,
@@ -9,8 +9,18 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { AuthContext } from '../contexts/AuthContext';
 import { authService } from '../services/auth.service';
-import { GOOGLE_WEB_CLIENT_ID } from '@env';
 import { LoginScreenProps } from '../types/navigation';
+import * as WebBrowser from 'expo-web-browser';
+
+// Initialiser WebBrowser
+WebBrowser.maybeCompleteAuthSession();
+
+const googleConfig = {
+  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  expoClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+};
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [isLogin, setIsLogin] = useState(true);
@@ -22,9 +32,11 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [errorMessage, setErrorMessage] = useState('');
   const { signIn } = useContext(AuthContext);
 
-  const [, , googlePromptAsync] = Google.useAuthRequest({
-    clientId: GOOGLE_WEB_CLIENT_ID,
-    iosClientId: GOOGLE_WEB_CLIENT_ID,
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: googleConfig.androidClientId,
+    iosClientId: googleConfig.iosClientId,
+    webClientId: googleConfig.webClientId,
+    clientId: googleConfig.expoClientId,
   });
 
   const handleEmailAuth = async () => {
@@ -36,24 +48,28 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     setIsLoading(true);
     try {
       if (isLogin) {
+        console.log('Tentative de connexion avec:', { email });
         const result = await authService.login({ email, password });
+        console.log('Résultat connexion:', result);
         if (result.token) {
           await signIn(result.token);
           navigation.replace('Dashboard');
         }
       } else {
+        console.log('Tentative d\'inscription avec:', { email, name: `${firstName} ${lastName}` });
         const result = await authService.register({
           email,
           password,
-          firstName,
-          lastName,
+          name: `${firstName} ${lastName}`,
         });
+        console.log('Résultat inscription:', result);
         if (result.token) {
           await signIn(result.token);
           navigation.replace('Dashboard');
         }
       }
     } catch (error: any) {
+      console.error('Erreur auth:', error);
       setErrorMessage(error.message || 'Une erreur est survenue');
     } finally {
       setIsLoading(false);
@@ -96,21 +112,19 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     }
   };
 
-  const handleGoogleAuth = async () => {
-    setIsLoading(true);
+  const handleGoogleSignIn = async () => {
     try {
-      const response = await googlePromptAsync();
-      if (response?.type === 'success' && response.authentication) {
-        const result = await authService.handleGoogleLogin(response.authentication.accessToken);
-        if (result.token) {
-          await signIn(result.token);
+      const result = await promptAsync();
+      if (result?.type === 'success' && result.authentication) {
+        const userInfo = await authService.handleGoogleLogin(result.authentication.accessToken);
+        if (userInfo.token) {
+          await signIn(userInfo.token);
           navigation.replace('Dashboard');
         }
       }
-    } catch (error: any) {
-      setErrorMessage(error.message || 'Erreur de connexion Google');
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      console.error('Erreur de connexion Google:', error);
+      setErrorMessage('Erreur de connexion avec Google');
     }
   };
 
@@ -204,7 +218,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
           <TouchableOpacity
             style={styles.googleButton}
-            onPress={handleGoogleAuth}
+            onPress={handleGoogleSignIn}
             disabled={isLoading}
           >
             <Text style={styles.socialButtonText}>

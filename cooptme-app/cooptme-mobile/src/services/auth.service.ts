@@ -1,26 +1,37 @@
 import { apiClient, CONFIG } from '../middleware/api.middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { AuthResponse, LoginData, RegisterData } from '../types';
+import { AuthResponse } from '../types';
+
+const AUTH_CONFIG = {
+  domain: process.env.AUTH0_DOMAIN,
+  clientId: process.env.AUTH0_CLIENT_ID
+};
 
 class AuthService {
-  async login(data: LoginData): Promise<AuthResponse> {
+  async login(data: { email: string; password: string }): Promise<AuthResponse> {
     try {
       const response = await apiClient.post(CONFIG.AUTH_ENDPOINTS.LOGIN, data);
-      await this.handleAuthResponse(response.data);
+      if (response.data.token) {
+        await AsyncStorage.setItem(CONFIG.STORAGE_KEYS.USER_TOKEN, response.data.token);
+      }
       return response.data;
     } catch (error: any) {
-      throw new Error(error.message || 'Erreur de connexion');
+      console.error('Erreur de connexion:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Erreur de connexion');
     }
   }
 
-  async register(data: RegisterData): Promise<AuthResponse> {
+  async register(data: { email: string; password: string; name: string }): Promise<AuthResponse> {
     try {
       const response = await apiClient.post(CONFIG.AUTH_ENDPOINTS.REGISTER, data);
-      await this.handleAuthResponse(response.data);
+      if (response.data.token) {
+        await AsyncStorage.setItem(CONFIG.STORAGE_KEYS.USER_TOKEN, response.data.token);
+      }
       return response.data;
     } catch (error: any) {
-      throw new Error(error.message || 'Erreur d\'inscription');
+      console.error('Erreur d\'inscription:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Erreur d\'inscription');
     }
   }
 

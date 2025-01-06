@@ -15,7 +15,9 @@ const CONFIG = {
   STORAGE_KEYS: {
     USER_TOKEN: 'userToken',
     USER_DATA: 'userData'
-  }
+  },
+  JWT_SECRET: process.env.JWT_SECRET,
+  DATABASE_URL: process.env.DATABASE_URL
 };
 
 export const apiClient = axios.create({
