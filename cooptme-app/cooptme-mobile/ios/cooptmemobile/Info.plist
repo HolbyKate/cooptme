@@ -30,6 +30,14 @@
           <string>com.anonymous.cooptmemobile</string>
         </array>
       </dict>
+      <dict>
+        <key>CFBundleURLName</key>
+        <string>auth0</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>com.anonymous.cooptmemobile.auth0</string>
+        </array>
+      </dict>
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
@@ -48,6 +56,10 @@
     <string>Allow $(PRODUCT_NAME) to access your camera</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <key>NSUserActivityTypes</key>
+    <array>
+      <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
+    </array>
     <key>UIAppFonts</key>
     <array>
       <string>Quicksand-Regular.ttf</string>

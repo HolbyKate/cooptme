@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -26,36 +28,50 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": ["CAMERA", "android.permission.CAMERA", "VIBRATE"],
+      "permissions": [
+        "CAMERA",
+        "android.permission.CAMERA",
+        "VIBRATE"
+      ],
       "package": "com.anonymous.cooptmemobile"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "config": {
+        "auth0Domain": "dev-0t24v0qwt3cy3n7z.us.auth0.com"
+      }
     },
     "plugins": [
-          [
-            "expo-font",
-            {
-              "fonts": [
-                "./assets/fonts/Quicksand-Regular.ttf",
-                "./assets/fonts/Quicksand-Bold.ttf"
-              ]
-            }
-          ],
-          [
-            "expo-av"
-          ],
-          [
-            "expo-camera",
-            {
-              "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
-              "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
-              "recordAudioAndroid": true
-            }
-          ],
-          [
-            "expo-router"
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Quicksand-Regular.ttf",
+            "./assets/fonts/Quicksand-Bold.ttf"
           ]
-        ]
+        }
+      ],
+      [
+        "expo-av"
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-router"
+      ],
+      [
+        "react-native-auth0",
+        {
+          "domain": "dev-0t24v0qwt3cy3n7z.us.auth0.com"
+        }
+      ]
+    ],
+    "scheme": "cooptme"
   }
 }

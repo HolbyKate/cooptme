@@ -43,3 +43,7 @@ export interface SocialLoginData {
     firstName?: string;
     lastName?: string;
 }
+
+export interface QueryResult<T> {
+    rows: T[];
+}

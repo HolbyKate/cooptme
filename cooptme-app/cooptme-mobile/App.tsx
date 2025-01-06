@@ -195,20 +195,7 @@ function AuthNavigator() {
 export default function App() {
   return (
     <NavigationContainer>
-      <RootStack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <RootStack.Screen name="AuthStack" component={AuthNavigator} />
-        <RootStack.Screen name="AppStack" component={DrawerNavigator} />
-        <RootStack.Screen
-          name="ChatConversation"
-          component={ChatConversationScreen}
-        />
-      </RootStack.Navigator>
       <AuthProvider>
-      <NavigationContainer>
         <RootStack.Navigator
           screenOptions={{
             headerShown: false,
@@ -221,8 +208,7 @@ export default function App() {
             component={ChatConversationScreen}
           />
         </RootStack.Navigator>
-      </NavigationContainer>
-    </AuthProvider>
+      </AuthProvider>
     </NavigationContainer>
   );
 }
