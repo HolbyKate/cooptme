@@ -4,28 +4,68 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
   ScrollView,
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import {
-  Menu,
-  Bell
-} from 'lucide-react-native';
+import { Menu, Bell } from 'lucide-react-native';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Video, ResizeMode } from 'expo-av';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
 
-const screenWidth = Dimensions.get('window').width;
+type DashboardScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
 const menuItems = [
   { id: 1, title: 'Contacts', screen: 'Contacts' },
   { id: 2, title: 'Profiles', screen: 'Profiles' },
   { id: 3, title: 'Events', screen: 'Events' },
-  { id: 4, title: 'Calendar', screen: 'Calendar' },
-  { id: 5, title: 'Chat', screen: 'Chat' },
-  { id: 6, title: 'Job Offers', screen: 'JobOffers' },
+  { id: 4, title: 'Chat', screen: 'Chat' },
+  { id: 5, title: 'Scan', screen: 'Scan' },
 ];
+
+export default function DashboardScreen() {
+  const navigation = useNavigation<DashboardScreenNavigationProp>();
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          style={styles.menuButton}
+        >
+          <Menu color="#4247BD" size={24} />
+        </TouchableOpacity>
+        <NotificationCard />
+      </View>
+
+      <ScrollView style={styles.content}>
+        <View style={styles.logoContainer}>
+          <Video
+            style={styles.logo}
+            source={require('../../assets/logo_bleu_video.mp4')}
+            resizeMode={ResizeMode.CONTAIN}
+            shouldPlay={true}
+            isLooping={true}
+            isMuted={true}
+          />
+        </View>
+
+        <View style={styles.menuGrid}>
+          {menuItems.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.menuItem}
+              onPress={() => navigation.navigate(item.screen as keyof RootStackParamList)}
+            >
+              <Text style={styles.menuItemText}>{item.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 
 const NotificationCard = () => (
   <View style={styles.notificationCard}>
@@ -40,52 +80,6 @@ const NotificationCard = () => (
     </ScrollView>
   </View>
 );
-
-export default function DashboardScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<any>>();
-
-  const handleMenuPress = () => {
-    navigation.dispatch(DrawerActions.openDrawer());
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
-          <Menu color="#4247BD" size={24} />
-        </TouchableOpacity>
-        <Image
-          source={require('../../assets/logo_blue.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
-
-      <ScrollView style={styles.content}>
-        <NotificationCard />
-
-        <View style={styles.menuGrid}>
-          {menuItems.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.menuItem}
-              onPress={() => navigation.navigate(item.screen)}
-            >
-              <Text style={styles.menuItemText}>{item.title}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <TouchableOpacity
-          style={styles.scanButton}
-          onPress={() => navigation.navigate('Scan')}
-        >
-          <Text style={styles.scanButtonText}>Scan</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
 
 const styles = StyleSheet.create({
   container: {

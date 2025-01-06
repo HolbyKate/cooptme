@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -12,126 +12,62 @@ import {
 import { Menu, MapPin, Building2 } from 'lucide-react-native';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { generateContacts, Contact, categories } from './ProfileGenerator';
-import { TabParamList } from '../../App';
+import { RootStackParamList } from '../types/navigation';
 import profileService from '../services/profileService';
 import { LinkedInProfile } from '../types';
 
-const windowWidth = Dimensions.get('window').width;
-
-// Générer 100 contacts de test
-const contacts = generateContacts(100);
-
-type ProfilesScreenNavigationProp = NativeStackNavigationProp<TabParamList>;
+type ProfilesScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Profiles'>;
 
 export default function ProfilesScreen() {
   const navigation = useNavigation<ProfilesScreenNavigationProp>();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [profiles, setProfiles] = useState<LinkedInProfile[]>([]);
 
-  const handleMenuPress = () => {
-    navigation.dispatch(DrawerActions.openDrawer());
+  useEffect(() => {
+    loadProfiles();
+  }, []);
+
+  const loadProfiles = async () => {
+    try {
+      const loadedProfiles = await profileService.getProfiles();
+      setProfiles(loadedProfiles);
+    } catch (error) {
+      console.error('Erreur lors du chargement des profils:', error);
+    }
   };
 
-  const handleCategoryPress = (categoryTitle: string) => {
-    setSelectedCategory(categoryTitle);
-  };
-
-  const handleContactPress = (contact: Contact) => {
-    navigation.navigate('ProfileDetail', { contact } as never);
-  };
-
-  const handleBackToCategories = () => {
-    setSelectedCategory(null);
-  };
-
-  const renderCategoryItem = ({ item }: { item: typeof categories[0] }) => {
-    const count = contacts.filter(contact => contact.category === item.title).length;
-
-    return (
-      <TouchableOpacity
-        style={[styles.categoryCard, { width: (windowWidth - 50) / 2 }]}
-        onPress={() => handleCategoryPress(item.title)}
-      >
-        <Text style={styles.categoryTitle}>{item.title}</Text>
-        <Text style={styles.categoryCount}>{count} contacts</Text>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderContactItem = ({ item }: { item: Contact }) => (
+  const renderProfileItem = ({ item }: { item: LinkedInProfile }) => (
     <TouchableOpacity
-      style={styles.contactCard}
-      onPress={() => handleContactPress(item)}
+      style={styles.profileCard}
+      onPress={() => navigation.navigate('ProfileDetail', { profileId: item.id })}
     >
-      <View style={styles.photoContainer}>
-        <Image
-          source={{ uri: item.photo }}
-          style={styles.photo}
-          defaultSource={require('../../assets/default-avatar.png')}
-        />
-      </View>
-      <View style={styles.contactInfo}>
+      <View style={styles.profileInfo}>
         <Text style={styles.name}>{item.firstName} {item.lastName}</Text>
-        <Text style={styles.function}>{item.function}</Text>
-        <View style={styles.additionalInfo}>
-          <View style={styles.infoItem}>
-            <Building2 size={12} color="#666" style={styles.infoIcon} />
-            <Text style={styles.infoText}>{item.company}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <MapPin size={12} color="#666" style={styles.infoIcon} />
-            <Text style={styles.infoText}>{item.meetingPlace}</Text>
-          </View>
-        </View>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.company}>{item.company}</Text>
+        <Text style={styles.location}>{item.location}</Text>
       </View>
     </TouchableOpacity>
   );
 
-  const renderContent = () => {
-    if (selectedCategory) {
-      return (
-        <FlatList
-          key="contactsList"
-          data={contacts.filter(contact => contact.category === selectedCategory)}
-          renderItem={renderContactItem}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
-        />
-      );
-    } else {
-      return (
-        <FlatList
-          key="categoriesGrid"
-          data={categories}
-          renderItem={renderCategoryItem}
-          keyExtractor={item => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.categoryRow}
-          contentContainerStyle={styles.categoriesList}
-        />
-      );
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
+        <TouchableOpacity
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          style={styles.menuButton}
+        >
           <Menu color="#4247BD" size={24} />
         </TouchableOpacity>
-        {selectedCategory && (
-          <TouchableOpacity onPress={handleBackToCategories} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Retour aux catégories</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>
-          {selectedCategory ? selectedCategory : 'Catégories'}
-        </Text>
-        {renderContent()}
+        <Text style={styles.title}>Mes Profils LinkedIn</Text>
+        <FlatList
+          data={profiles}
+          renderItem={renderProfileItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContainer}
+        />
       </View>
     </SafeAreaView>
   );
@@ -144,113 +80,53 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    paddingTop: 50,
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
   },
   menuButton: {
     padding: 8,
-  },
-  backButton: {
-    marginLeft: 20,
-  },
-  backButtonText: {
-    color: '#4247BD',
-    fontFamily: 'Quicksand-Medium',
-    fontSize: 16,
   },
   content: {
     flex: 1,
     padding: 20,
   },
   title: {
-    fontFamily: 'Quicksand-Bold',
     fontSize: 24,
+    fontWeight: 'bold',
     color: '#4247BD',
     marginBottom: 20,
-  },
-  categoriesList: {
-    paddingBottom: 20,
-  },
-  categoryRow: {
-    justifyContent: 'space-between',
-  },
-  categoryCard: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  categoryTitle: {
-    fontFamily: 'Quicksand-Bold',
-    fontSize: 14,
-    color: '#4247BD',
-    marginBottom: 5,
-  },
-  categoryCount: {
-    fontFamily: 'Quicksand-Regular',
-    fontSize: 12,
-    color: '#666',
   },
   listContainer: {
     paddingBottom: 20,
   },
-  contactCard: {
-    flexDirection: 'row',
-    padding: 15,
+  profileCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    marginBottom: 15,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
   },
-  photoContainer: {
-    marginRight: 15,
-  },
-  photo: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-  },
-  contactInfo: {
+  profileInfo: {
     flex: 1,
-    justifyContent: 'center',
   },
   name: {
-    fontFamily: 'Quicksand-Bold',
-    fontSize: 16,
-    color: '#333',
+    fontSize: 18,
+    fontWeight: 'bold',
     marginBottom: 4,
   },
-  function: {
-    fontFamily: 'Quicksand-Regular',
+  company: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  additionalInfo: {
-    gap: 4,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  infoIcon: {
-    marginRight: 4,
-  },
-  infoText: {
-    fontFamily: 'Quicksand-Regular',
-    fontSize: 12,
+  location: {
+    fontSize: 14,
     color: '#666',
   },
 });

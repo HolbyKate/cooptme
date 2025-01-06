@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -10,14 +10,34 @@ import {
 } from "react-native";
 import { ArrowLeft } from "lucide-react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import type { Contact } from "./ProfileGenerator";
-import profileService from '../services/profileService';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
+import { profileService } from '../services/profileService';
 import { LinkedInProfile } from '../types';
 
+type ProfileDetailScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ProfileDetail'>;
+
 export default function ProfileDetailScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<ProfileDetailScreenNavigationProp>();
   const route = useRoute();
-  const { contact } = route.params as { contact: Contact };
+  const { profileId } = route.params as { profileId: string };
+  const [profile, setProfile] = useState<LinkedInProfile | null>(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const loadedProfile = await profileService.getProfileById(profileId);
+        setProfile(loadedProfile);
+      } catch (error) {
+        console.error('Erreur lors du chargement du profil:', error);
+      }
+    };
+    loadProfile();
+  }, [profileId]);
+
+  if (!profile) {
+    return <LoadingScreen />;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -32,43 +52,18 @@ export default function ProfileDetailScreen() {
 
       <ScrollView style={styles.content}>
         <View style={styles.profileHeader}>
-          {contact.photo ? (
-            <Image
-              source={{
-                uri: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? "men" : "women"}/${Math.floor(Math.random() * 100)}.jpg`,
-              }}
-              style={styles.profilePhoto}
-            />
-          ) : (
-            <View style={styles.photoPlaceholder}>
-              <Text style={styles.photoPlaceholderText}>
-                {contact.firstName[0]}
-                {contact.lastName[0]}
-              </Text>
-            </View>
-          )}
+          <View style={styles.photoPlaceholder}>
+            <Text style={styles.photoPlaceholderText}>
+              {profile.firstName[0]}
+              {profile.lastName[0]}
+            </Text>
+          </View>
           <Text style={styles.name}>
-            {contact.firstName} {contact.lastName}
+            {profile.firstName} {profile.lastName}
           </Text>
-          <Text style={styles.function}>{contact.function}</Text>
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>{contact.category}</Text>
-          </View>
-        </View>
-
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Informations de contact</Text>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Lieu de rencontre</Text>
-            <Text style={styles.infoValue}>{contact.meetingPlace}</Text>
-          </View>
-
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Catégorie</Text>
-            <Text style={styles.infoValue}>{contact.category}</Text>
-          </View>
-
-          {/* Ajoutez d'autres informations selon vos besoins */}
+          <Text style={styles.function}>{profile.title}</Text>
+          <Text style={styles.company}>{profile.company}</Text>
+          <Text style={styles.location}>{profile.location}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

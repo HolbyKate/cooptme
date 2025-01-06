@@ -14,8 +14,8 @@ export type Contact = {
   photoId: number;
 };
 
-export type CategoryTitle = 'IT' | 'Marketing' | 'RH' | 'Finance' | 'Communication' | 
-                          'Students' | 'Project Manager' | 'Product Owner' | 
+export type CategoryTitle = 'IT' | 'Marketing' | 'RH' | 'Finance' | 'Communication' |
+                          'Students' | 'Project Manager' | 'Product Owner' |
                           'Customer Care Manager' | 'Other';
 
 type JobTitlesType = {

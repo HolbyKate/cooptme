@@ -70,7 +70,8 @@
     "socket.io-client": "4.7.2",
     "undefined": "expo-auth-session/providers/google",
     "uuid": "^11.0.3",
-    "expo-web-browser": "~14.0.1"
+    "expo-web-browser": "~14.0.1",
+    "expo-apple-authentication": "~7.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

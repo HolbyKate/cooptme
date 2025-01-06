@@ -1,21 +1,61 @@
+export interface LoginData {
+    email: string;
+    password: string;
+}
+
+export interface RegisterData {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+}
+
 export interface User {
     id: string;
     email: string;
     firstName: string;
     lastName: string;
-    createdAt?: string;
-    updatedAt?: string;
 }
 
-export interface DatabaseProfile {
-    profile_url: string;
-    first_name: string;
-    last_name: string;
+export interface AuthResponse {
+    token: string;
+    user: User;
+}
+
+export interface Event {
+    id?: string;
+    title: string;
+    description: string;
+    date: Date;
+    location: string;
+    type: string;
+    organizerId: string;
+}
+
+export interface EventDTO {
+    id: string;
+    title: string;
+    description: string;
+    date: string;
+    location: string;
+    type: string;
+    createdAt: string;
+    updatedAt: string;
+    organizerId: string;
+}
+
+export interface Profile {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
     title?: string;
     company?: string;
     location?: string;
-    scanned_at?: string;
-    updated_at: string;
+    imageUrl?: string;
+    bio?: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface LinkedInProfile {
@@ -27,23 +67,4 @@ export interface LinkedInProfile {
     location: string;
     profileUrl: string;
     scannedAt: string;
-}
-
-export interface AuthResponse {
-    success: boolean;
-    token?: string;
-    user?: User;
-    error?: string;
-}
-
-export interface SocialLoginData {
-    type: 'google' | 'apple';
-    token: string;
-    email: string;
-    firstName?: string;
-    lastName?: string;
-}
-
-export interface QueryResult<T> {
-    rows: T[];
 }

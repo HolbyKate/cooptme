@@ -1,66 +1,72 @@
-import { PrismaClient } from '@prisma/client';
+import { apiClient, CONFIG } from '../middleware/api.middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuthResponse } from '../types';
-
-const prisma = new PrismaClient();
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { AuthResponse, LoginData, RegisterData } from '../types';
 
 class AuthService {
-  async handleAuth0Login(userData: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    auth0Id: string;
-  }): Promise<AuthResponse> {
+  async login(data: LoginData): Promise<AuthResponse> {
     try {
-      let user = await prisma.user.findUnique({
-        where: { email: userData.email }
-      });
-
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            email: userData.email,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            auth0Id: userData.auth0Id,
-            password: '' // Champ vide car nous utilisons Auth0
-          }
-        });
-      }
-
-      const response: AuthResponse = {
-        success: true,
-        token: userData.auth0Id, // Utiliser l'ID Auth0 comme token
-        user: {
-          id: user.id.toString(),
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName
-        }
-      };
-
-      if (!response.token || !response.user) {
-        throw new Error('Données de réponse invalides');
-      }
-
-      await AsyncStorage.multiSet([
-        ['userToken', response.token],
-        ['userData', JSON.stringify(response.user)]
-      ]);
-
-      return response;
+      const response = await apiClient.post(CONFIG.AUTH_ENDPOINTS.LOGIN, data);
+      await this.handleAuthResponse(response.data);
+      return response.data;
     } catch (error: any) {
-      console.error('Erreur de connexion:', error);
-      return {
-        success: false,
-        error: error.message || 'Erreur de connexion'
-      };
+      throw new Error(error.message || 'Erreur de connexion');
+    }
+  }
+
+  async register(data: RegisterData): Promise<AuthResponse> {
+    try {
+      const response = await apiClient.post(CONFIG.AUTH_ENDPOINTS.REGISTER, data);
+      await this.handleAuthResponse(response.data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.message || 'Erreur d\'inscription');
+    }
+  }
+
+  async handleGoogleLogin(accessToken: string): Promise<AuthResponse> {
+    try {
+      const response = await apiClient.post(CONFIG.AUTH_ENDPOINTS.GOOGLE, { accessToken });
+      await this.handleAuthResponse(response.data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.message || 'Erreur de connexion Google');
+    }
+  }
+
+  async handleAppleLogin(credential: AppleAuthentication.AppleAuthenticationCredential): Promise<AuthResponse> {
+    try {
+      const response = await apiClient.post(CONFIG.AUTH_ENDPOINTS.APPLE, { credential });
+      await this.handleAuthResponse(response.data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.message || 'Erreur de connexion Apple');
+    }
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    try {
+      await apiClient.post(CONFIG.AUTH_ENDPOINTS.FORGOT_PASSWORD, { email });
+    } catch (error: any) {
+      throw new Error(error.message || 'Erreur lors de la réinitialisation du mot de passe');
+    }
+  }
+
+  private async handleAuthResponse(data: AuthResponse) {
+    if (data.token && data.user) {
+      await AsyncStorage.multiSet([
+        [CONFIG.STORAGE_KEYS.USER_TOKEN, data.token],
+        [CONFIG.STORAGE_KEYS.USER_DATA, JSON.stringify(data.user)]
+      ]);
     }
   }
 
   async logout(): Promise<void> {
-    await AsyncStorage.multiRemove(['userToken', 'userData']);
+    await AsyncStorage.multiRemove([
+      CONFIG.STORAGE_KEYS.USER_TOKEN,
+      CONFIG.STORAGE_KEYS.USER_DATA
+    ]);
   }
 }
 
-export default new AuthService();
+export const authService = new AuthService();

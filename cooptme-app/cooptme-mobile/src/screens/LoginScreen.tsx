@@ -1,116 +1,240 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext } from 'react';
 import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  Image,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri, useAuthRequest } from 'expo-auth-session';
-import authService from "../services/auth.service";
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthContext, AuthContextType } from "../contexts/AuthContext";
-import { AUTH0_DOMAIN, AUTH0_CLIENT_ID } from '@env';
-
-interface LoginScreenProps {
-  navigation: NativeStackNavigationProp<any>;
-}
-
-WebBrowser.maybeCompleteAuthSession();
-
-// Configuration Auth0
-const discovery = {
-  authorizationEndpoint: `https://${AUTH0_DOMAIN}/authorize`,
-  tokenEndpoint: `https://${AUTH0_DOMAIN}/oauth/token`,
-  userInfoEndpoint: `https://${AUTH0_DOMAIN}/userinfo`,
-};
-
-const useAuth0 = () => {
-  const [request, response, promptAsync] = useAuthRequest(
-    {
-      clientId: AUTH0_CLIENT_ID,
-      redirectUri: 'com.anonymous.cooptmemobile.auth0://dev-0t24v0qwt3cy3n7z.us.auth0.com',
-      responseType: 'token',
-      scopes: ['openid', 'profile', 'email'],
-    },
-    discovery
-  );
-
-  return { request, response, promptAsync };
-};
+  View, TextInput, TouchableOpacity, Text, StyleSheet,
+  Platform, KeyboardAvoidingView, ScrollView, Image,
+  ActivityIndicator
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Google from 'expo-auth-session/providers/google';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { AuthContext } from '../contexts/AuthContext';
+import { authService } from '../services/auth.service';
+import { GOOGLE_WEB_CLIENT_ID } from '@env';
+import { LoginScreenProps } from '../types/navigation';
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const { signIn } = useContext(AuthContext) as AuthContextType;
-  const { promptAsync } = useAuth0();
+  const [errorMessage, setErrorMessage] = useState('');
+  const { signIn } = useContext(AuthContext);
 
-  const handleAuth0Login = async () => {
+  const [, , googlePromptAsync] = Google.useAuthRequest({
+    clientId: GOOGLE_WEB_CLIENT_ID,
+    iosClientId: GOOGLE_WEB_CLIENT_ID,
+  });
+
+  const handleEmailAuth = async () => {
+    if (!email || !password || (!isLogin && (!firstName || !lastName))) {
+      setErrorMessage('Veuillez remplir tous les champs');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const authResult = await promptAsync();
-
-      if (authResult?.type === 'success' && authResult.authentication) {
-        const userInfoResponse = await fetch(discovery.userInfoEndpoint, {
-          headers: {
-            Authorization: `Bearer ${authResult.authentication.accessToken}`
-          }
+      if (isLogin) {
+        const result = await authService.login({ email, password });
+        if (result.token) {
+          await signIn(result.token);
+          navigation.replace('Dashboard');
+        }
+      } else {
+        const result = await authService.register({
+          email,
+          password,
+          firstName,
+          lastName,
         });
-
-        const userInfo = await userInfoResponse.json();
-
-        const result = await authService.handleAuth0Login({
-          email: userInfo.email,
-          firstName: userInfo.given_name,
-          lastName: userInfo.family_name,
-          auth0Id: userInfo.sub
-        });
-
-        if (result.success && result.token) {
-          await signIn(result.token, result.user);
-          navigation.replace("MainApp");
+        if (result.token) {
+          await signIn(result.token);
+          navigation.replace('Dashboard');
         }
       }
     } catch (error: any) {
-      console.error("Erreur Auth0:", error);
-      setErrorMessage(error.message || "Erreur de connexion");
+      setErrorMessage(error.message || 'Une erreur est survenue');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setErrorMessage('Veuillez entrer votre email');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await authService.forgotPassword(email);
+      setErrorMessage('Un email de réinitialisation a été envoyé');
+    } catch (error: any) {
+      setErrorMessage(error.message || 'Erreur lors de l\'envoi de l\'email');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAppleAuth = async () => {
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      const result = await authService.handleAppleLogin(credential);
+      if (result.token) {
+        await signIn(result.token);
+        navigation.replace('Dashboard');
+      }
+    } catch (error: any) {
+      setErrorMessage(error.message || 'Erreur de connexion Apple');
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    setIsLoading(true);
+    try {
+      const response = await googlePromptAsync();
+      if (response?.type === 'success' && response.authentication) {
+        const result = await authService.handleGoogleLogin(response.authentication.accessToken);
+        if (result.token) {
+          await signIn(result.token);
+          navigation.replace('Dashboard');
+        }
+      }
+    } catch (error: any) {
+      setErrorMessage(error.message || 'Erreur de connexion Google');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
       <LinearGradient
-        colors={["#4247BD", "#4247BD", "#4247BD"]}
+        colors={['#4247BD', '#4247BD']}
         style={styles.background}
       />
-      <View style={styles.content}>
-        <Image
-          source={require("../../assets/logo_transparent.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        {errorMessage ? (
-          <Text style={styles.errorText}>{errorMessage}</Text>
-        ) : null}
 
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={handleAuth0Login}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.buttonText}>Se connecter avec Auth0</Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          <Image
+            source={require('../../assets/logo_transparent.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+
+          {errorMessage ? (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          ) : null}
+
+          {!isLogin && (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Prénom"
+                value={firstName}
+                onChangeText={setFirstName}
+                placeholderTextColor="#666"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Nom"
+                value={lastName}
+                onChangeText={setLastName}
+                placeholderTextColor="#666"
+              />
+            </>
           )}
-        </TouchableOpacity>
-      </View>
-    </View>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            placeholderTextColor="#666"
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Mot de passe"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholderTextColor="#666"
+          />
+
+          {isLogin && (
+            <TouchableOpacity
+              onPress={handleForgotPassword}
+              style={styles.forgotPassword}
+            >
+              <Text style={styles.forgotPasswordText}>
+                Mot de passe oublié ?
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={styles.mainButton}
+            onPress={handleEmailAuth}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>
+                {isLogin ? 'Se connecter' : 'S\'inscrire'}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.googleButton}
+            onPress={handleGoogleAuth}
+            disabled={isLoading}
+          >
+            <Text style={styles.socialButtonText}>
+              Continuer avec Google
+            </Text>
+          </TouchableOpacity>
+
+          {Platform.OS === 'ios' && (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={5}
+              style={styles.appleButton}
+              onPress={handleAppleAuth}
+            />
+          )}
+
+          <TouchableOpacity
+            style={styles.switchButton}
+            onPress={() => setIsLogin(!isLogin)}
+          >
+            <Text style={styles.switchButtonText}>
+              {isLogin
+                ? 'Pas encore de compte ? S\'inscrire'
+                : 'Déjà un compte ? Se connecter'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -119,46 +243,108 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   background: {
-    position: "absolute",
+    position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
   },
-  errorText: {
-    color: "#FF6B6B",
-    fontSize: 14,
-    marginBottom: 12,
-    marginTop: -8,
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
   },
-  loginButton: {
-    backgroundColor: "#FF8F66",
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    marginTop: 24,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+  content: {
+    width: '100%',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  logo: {
+    width: 150,
+    height: 150,
+    marginBottom: 30,
+  },
+  input: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    fontSize: 16,
+    color: '#333',
+  },
+  inputError: {
+    borderColor: '#FF6B6B',
+    borderWidth: 1,
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  mainButton: {
+    width: '100%',
+    backgroundColor: '#FF8F66',
+    borderRadius: 25,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
+  googleButton: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 25,
+    padding: 15,
+    alignItems: 'center',
+    marginBottom: 15,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+  },
+  appleButton: {
+    width: '100%',
+    height: 50,
+    marginBottom: 15,
+  },
   buttonText: {
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  socialButtonText: {
+    color: '#333333',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  logo: {
-    width: 200,
-    height: 200,
-    marginBottom: 24,
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
   },
+  forgotPasswordText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  switchButton: {
+    marginTop: 20,
+  },
+  switchButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  }
 });

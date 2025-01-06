@@ -13,11 +13,13 @@ import {
 import { useEffect, useRef } from "react";
 import { Overlay } from "./Overlay";
 import LinkedInBrowser from "../../components/LinkedInBrowser";
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { TabParamList } from '../../../App';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../types/navigation';
 import { LinkedInProfile } from "../../utils/linkedinScraper";
 
-type Props = NativeStackScreenProps<TabParamList, 'Scan'>;
+type Props = {
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Scan'>;
+};
 
 export default function ScanScreen({ navigation }: Props) {
   const qrLock = useRef(false);
