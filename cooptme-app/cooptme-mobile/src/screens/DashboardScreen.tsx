@@ -24,6 +24,8 @@ const menuItems = [
   { id: 5, title: 'Scan', screen: 'Scan' },
 ];
 
+const screenWidth = Dimensions.get('window').width;
+
 export default function DashboardScreen() {
   const navigation = useNavigation<DashboardScreenNavigationProp>();
 
@@ -43,7 +45,7 @@ export default function DashboardScreen() {
         <View style={styles.logoContainer}>
           <Video
             style={styles.logo}
-            source={require('../../assets/logo_bleu_video.mp4')}
+            source={require('../../assets/logo_blue_video.mp4')}
             resizeMode={ResizeMode.CONTAIN}
             shouldPlay={true}
             isLooping={true}
@@ -56,7 +58,9 @@ export default function DashboardScreen() {
             <TouchableOpacity
               key={item.id}
               style={styles.menuItem}
-              onPress={() => navigation.navigate(item.screen as keyof RootStackParamList)}
+              onPress={() => {
+                navigation.navigate(item.screen as 'Contacts' | 'Profiles' | 'Events' | 'Chat' | 'Scan');
+              }}
             >
               <Text style={styles.menuItemText}>{item.title}</Text>
             </TouchableOpacity>
@@ -179,5 +183,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Quicksand-Bold',
     color: '#FFFFFF',
     fontSize: 16,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 100,
+    marginBottom: 20,
   },
 });

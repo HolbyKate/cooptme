@@ -13,7 +13,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { profileService } from '../services/profileService';
-import { LinkedInProfile } from '../types';
+import { LinkedInProfile } from '../utils/linkedinScraper';
 
 type ProfileDetailScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ProfileDetail'>;
 
