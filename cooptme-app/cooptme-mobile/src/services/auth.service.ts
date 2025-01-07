@@ -3,10 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { AuthResponse } from '../types';
 
-const AUTH_CONFIG = {
-  domain: process.env.AUTH0_DOMAIN,
-  clientId: process.env.AUTH0_CLIENT_ID
-};
 
 class AuthService {
   async login(data: { email: string; password: string }): Promise<AuthResponse> {
@@ -24,14 +20,46 @@ class AuthService {
 
   async register(data: { email: string; password: string; name: string }): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post(CONFIG.AUTH_ENDPOINTS.REGISTER, data);
+      console.log('Tentative d\'inscription vers:', `${CONFIG.API_URL}${CONFIG.AUTH_ENDPOINTS.REGISTER}`);
+
+      const response = await apiClient.post(CONFIG.AUTH_ENDPOINTS.REGISTER, data, {
+        timeout: 10000,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      });
+
+      console.log('Réponse brute du serveur:', response);
+
+      if (!response.data) {
+        throw new Error('Réponse invalide du serveur');
+      }
+
       if (response.data.token) {
         await AsyncStorage.setItem(CONFIG.STORAGE_KEYS.USER_TOKEN, response.data.token);
       }
+
       return response.data;
     } catch (error: any) {
-      console.error('Erreur d\'inscription:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.message || 'Erreur d\'inscription');
+      console.error('Erreur détaillée de l\'inscription:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        config: error.config,
+        isAxiosError: error.isAxiosError,
+        stack: error.stack
+      });
+
+      if (error.message === 'Network Error') {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez votre connexion internet et que le serveur est démarré.');
+      }
+
+      throw new Error(
+        error.response?.data?.message ||
+        error.message ||
+        'Erreur lors de l\'inscription'
+      );
     }
   }
 

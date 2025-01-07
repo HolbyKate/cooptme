@@ -1,10 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { DatabaseProfile, User, QueryResult } from "../types";
+import { User } from "../types";
 
 const DB_KEY = "linkedin_profiles_db";
 const USERS_KEY = "users_db";
 
-type DatabaseEntity = DatabaseProfile | User;
+type DatabaseEntity = User;
 type DatabaseTable = "profiles" | "users";
 
 class Database {
@@ -12,7 +12,7 @@ class Database {
     operation: string,
     params?: T[],
     table: DatabaseTable = "profiles"
-  ): Promise<QueryResult<T>> {
+  ): Promise<{ rows: T[] }> {
     try {
       const dbKey = table === "users" ? USERS_KEY : DB_KEY;
       const data = await AsyncStorage.getItem(dbKey);

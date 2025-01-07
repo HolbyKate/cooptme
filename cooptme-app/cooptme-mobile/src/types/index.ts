@@ -19,7 +19,11 @@ export interface User {
 
 export interface AuthResponse {
     token: string;
-    user: User;
+    user: {
+        id: string;
+        email: string;
+        name: string;
+    };
 }
 
 export interface Event {
@@ -67,4 +71,10 @@ export interface LinkedInProfile {
     location: string;
     profileUrl: string;
     scannedAt: string;
+}
+
+export interface DecodedToken {
+    exp: number;
+    iat: number;
+    userId: string;
 }

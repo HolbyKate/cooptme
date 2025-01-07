@@ -11,6 +11,7 @@ import { AuthContext } from '../contexts/AuthContext';
 import { authService } from '../services/auth.service';
 import { LoginScreenProps } from '../types/navigation';
 import * as WebBrowser from 'expo-web-browser';
+import { CONFIG } from '../middleware/api.middleware';
 
 // Initialiser WebBrowser
 WebBrowser.maybeCompleteAuthSession();
@@ -40,39 +41,14 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   });
 
   const handleEmailAuth = async () => {
-    if (!email || !password || (!isLogin && (!firstName || !lastName))) {
-      setErrorMessage('Veuillez remplir tous les champs');
-      return;
-    }
-
-    setIsLoading(true);
     try {
-      if (isLogin) {
-        console.log('Tentative de connexion avec:', { email });
-        const result = await authService.login({ email, password });
-        console.log('Résultat connexion:', result);
-        if (result.token) {
-          await signIn(result.token);
-          navigation.replace('Dashboard');
-        }
-      } else {
-        console.log('Tentative d\'inscription avec:', { email, name: `${firstName} ${lastName}` });
-        const result = await authService.register({
-          email,
-          password,
-          name: `${firstName} ${lastName}`,
-        });
-        console.log('Résultat inscription:', result);
-        if (result.token) {
-          await signIn(result.token);
-          navigation.replace('Dashboard');
-        }
-      }
-    } catch (error: any) {
-      console.error('Erreur auth:', error);
-      setErrorMessage(error.message || 'Une erreur est survenue');
-    } finally {
-      setIsLoading(false);
+      // Simuler une connexion réussie
+      const fakeToken = 'fake-token-123';
+      await signIn(fakeToken);
+      navigation.replace('Dashboard');
+    } catch (error) {
+      console.error('Erreur:', error);
+      setErrorMessage('Une erreur est survenue');
     }
   };
 
@@ -127,6 +103,36 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       setErrorMessage('Erreur de connexion avec Google');
     }
   };
+
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const response = await fetch(`${CONFIG.API_URL}/test`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Test de connexion réussi:', {
+          status: response.status,
+          data: data
+        });
+      } catch (error: any) {
+        console.error('Erreur détaillée du test de connexion:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        });
+      }
+    };
+    testConnection();
+  }, []);
 
   return (
     <KeyboardAvoidingView

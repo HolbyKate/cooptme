@@ -3,8 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthResponse } from '../types';
 
 const CONFIG = {
-  API_URL: 'http://192.168.31.149:3000/api',
-  API_TIMEOUT: 10000,
+  API_URL: 'http://10.0.2.2:3000/api',
+  API_TIMEOUT: 30000,
   AUTH_ENDPOINTS: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
@@ -42,4 +42,24 @@ apiClient.interceptors.request.use(
   }
 );
 
-export { CONFIG }; 
+apiClient.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('Erreur API interceptée:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+      isAxiosError: error.isAxiosError
+    });
+    
+    if (error.message === 'Network Error') {
+      throw new Error('Erreur de connexion au serveur. Vérifiez que le serveur est démarré et accessible.');
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
+export { CONFIG };

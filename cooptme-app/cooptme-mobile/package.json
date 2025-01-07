@@ -33,6 +33,7 @@
     "bcrypt": "^5.1.1",
     "cheerio": "1.0.0",
     "expo": "52.0.20",
+    "expo-apple-authentication": "~7.1.2",
     "expo-auth-session": "~6.0.1",
     "expo-av": "15.0.1",
     "expo-camera": "16.0.10",
@@ -46,6 +47,7 @@
     "expo-module-scripts": "4.0.2",
     "expo-router": "~4.0.15",
     "expo-status-bar": "2.0.0",
+    "expo-web-browser": "~14.0.1",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "lodash": "^4.17.21",
@@ -69,9 +71,7 @@
     "react-native-webview": "^13.12.5",
     "socket.io-client": "4.7.2",
     "undefined": "expo-auth-session/providers/google",
-    "uuid": "^11.0.3",
-    "expo-web-browser": "~14.0.1",
-    "expo-apple-authentication": "~7.1.2"
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
